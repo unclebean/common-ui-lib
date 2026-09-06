@@ -1,0 +1,33 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Dependencies
+node_modules
+dist
+dist-ssr
+storybook-static
+
+# Environment & Secrets
+.env
+.env.local
+.env.*.local
+.npmrc
+
+# Figma Local Cache & Overrides
+.figma/tokens.raw.json
+.figma/*.local.json
+
+# Editor & OS
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

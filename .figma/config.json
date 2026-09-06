@@ -1,0 +1,29 @@
+{
+  "figmaFileKey": "I7YMthupuK7DFg0VCdI39R",
+  "collections": {
+    "colors": "Colors",
+    "radius": "Radius",
+    "typography": "Typography"
+  },
+  "tokenMapping": {
+    "primary": "--primary",
+    "primary-foreground": "--primary-foreground",
+    "secondary": "--secondary",
+    "background": "--background",
+    "foreground": "--foreground",
+    "muted": "--muted",
+    "muted-foreground": "--muted-foreground",
+    "accent": "--accent",
+    "destructive": "--destructive",
+    "border": "--border",
+    "ring": "--ring",
+    "radius": "--radius",
+    "chart-1": "--chart-1",
+    "chart-2": "--chart-2",
+    "chart-3": "--chart-3",
+    "chart-4": "--chart-4",
+    "chart-5": "--chart-5",
+    "bullish": "--bullish",
+    "bearish": "--bearish"
+  }
+}
