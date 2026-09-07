@@ -248,6 +248,25 @@ First provide a brief, friendly 1-2 sentence explanation of the design choices m
     setTimeout(() => setCopiedIndex(null), 2000);
   };
 
+  // Reset conversation and return Canvas to blank slate
+  const handleReset = async () => {
+    setMessages([]);
+    try {
+      await fetch("/api/ai/reset", { method: "POST" });
+      const ts = Date.now();
+      try {
+        localStorage.setItem("live_mockup_timestamp", String(ts));
+      } catch {}
+      const ch = channel || (api && typeof api.getChannel === "function" ? api.getChannel() : null);
+      if (ch && typeof ch.emit === "function") {
+        ch.emit("AI_MOCKUP_UPDATED", { timestamp: ts });
+      }
+      if (api && typeof api.emit === "function") {
+        api.emit("AI_MOCKUP_UPDATED", { timestamp: ts });
+      }
+    } catch {}
+  };
+
   // Save directly into Storybook repository
   const handleSaveToStorybook = async (code: string, index: number) => {
     const rawTitle = prompt("Enter a name for this mockup page:", "CustomDashboard");
@@ -352,16 +371,14 @@ First provide a brief, friendly 1-2 sentence explanation of the design choices m
             </select>
           </div>
 
-          {/* Clear Chat Button */}
-          {messages.length > 0 && (
-            <button
-              onClick={() => setMessages([])}
-              className="p-2 rounded-xl bg-slate-900/60 border border-slate-800/80 text-slate-400 hover:text-rose-400 hover:border-rose-900/50 transition-all"
-              title="Clear conversation"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
-          )}
+          {/* Clear / Reset Button */}
+          <button
+            onClick={handleReset}
+            className="p-2 rounded-xl bg-slate-900/60 border border-slate-800/80 text-slate-400 hover:text-rose-400 hover:border-rose-900/50 transition-all"
+            title="Reset Canvas & Start New Mockup"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
         </div>
       </div>
 
