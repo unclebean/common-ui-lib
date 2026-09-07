@@ -33,14 +33,10 @@ interface AIMockupPanelProps {
 export const AIMockupPanel: React.FC<AIMockupPanelProps> = ({ active, api, channel }) => {
   if (!active) return null;
 
-  // Configuration state (User provided)
-  const [geminiApiKey, setGeminiApiKey] = React.useState<string>(() => {
-    return localStorage.getItem("storybook_ai_gemini_key") || "";
-  });
+  // Configuration state
   const [model, setModel] = React.useState<string>(() => {
-    return localStorage.getItem("storybook_ai_model") || "gemini-2.0-flash";
+    return localStorage.getItem("storybook_ai_model") || "gemini-3.6-flash";
   });
-  const [showKeyInput, setShowKeyInput] = React.useState<boolean>(false);
 
   // System Context & Chat state
   const [designSpec, setDesignSpec] = React.useState<string>("");
@@ -65,12 +61,6 @@ export const AIMockupPanel: React.FC<AIMockupPanelProps> = ({ active, api, chann
       })
       .catch(() => {});
   }, []);
-
-  // Sync API Key & Model to localStorage
-  const handleApiKeyChange = (val: string) => {
-    setGeminiApiKey(val);
-    localStorage.setItem("storybook_ai_gemini_key", val);
-  };
 
   const handleModelChange = (val: string) => {
     setModel(val);
@@ -130,18 +120,6 @@ export const AIMockupPanel: React.FC<AIMockupPanelProps> = ({ active, api, chann
     const promptToSend = customPrompt || input;
     if (!promptToSend.trim() || isLoading) return;
 
-    if (!geminiApiKey.trim()) {
-      setShowKeyInput(true);
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content: "🔑 **Please enter your Gemini API Key first.**\n\nYou can get an API key for free from [Google AI Studio](https://aistudio.google.com/). Enter it in the input field above.",
-        },
-      ]);
-      return;
-    }
-
     const userMessage: Message = { role: "user", content: promptToSend };
     const newMessages = [...messages, userMessage];
     setMessages(newMessages);
@@ -189,7 +167,6 @@ First provide a brief, friendly 1-2 sentence explanation of the design choices m
           provider: "gemini",
           model,
           messages: payloadMessages,
-          apiKey: geminiApiKey,
         }),
       });
 
@@ -213,7 +190,7 @@ First provide a brief, friendly 1-2 sentence explanation of the design choices m
         ...newMessages,
         {
           role: "assistant",
-          content: `⚠️ **Generation Error**: ${err.message}\n\nPlease check your provider settings, API key, or ensure Ollama is running at ${ollamaUrl}.`,
+          content: `⚠️ **Generation Error**: ${err.message}`,
         },
       ]);
       setStatusMessage("");
@@ -333,9 +310,10 @@ First provide a brief, friendly 1-2 sentence explanation of the design choices m
   ];
 
   const modelOptions = [
-    { value: "gemini-2.0-flash", label: "Gemini 2.0 Flash (Fastest, Recommended)" },
+    { value: "gemini-3.6-flash", label: "Gemini 3.6 Flash (Default, Ultra Fast)" },
+    { value: "gemini-2.0-flash", label: "Gemini 2.0 Flash" },
+    { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro (Deep Reasoning)" },
     { value: "gemini-1.5-flash", label: "Gemini 1.5 Flash" },
-    { value: "gemini-1.5-pro", label: "Gemini 1.5 Pro (Deep Reasoning)" },
   ];
 
   return (
@@ -374,28 +352,6 @@ First provide a brief, friendly 1-2 sentence explanation of the design choices m
             </select>
           </div>
 
-          {/* API Key Toggle Button */}
-          <button
-            onClick={() => setShowKeyInput(!showKeyInput)}
-            className={`px-3 py-1.5 rounded-xl border text-xs font-medium transition-all flex items-center gap-1.5 ${
-              geminiApiKey.trim()
-                ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20"
-                : "bg-amber-500/10 border-amber-500/40 text-amber-300 animate-pulse hover:bg-amber-500/20"
-            }`}
-            title="Set Gemini API Key"
-          >
-            {geminiApiKey.trim() ? (
-              <>
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                <span>API Key Configured</span>
-              </>
-            ) : (
-              <>
-                <span>🔑 Enter API Key</span>
-              </>
-            )}
-          </button>
-
           {/* Clear Chat Button */}
           {messages.length > 0 && (
             <button
@@ -408,44 +364,6 @@ First provide a brief, friendly 1-2 sentence explanation of the design choices m
           )}
         </div>
       </div>
-
-      {/* User API Key Input Drawer */}
-      {(!geminiApiKey.trim() || showKeyInput) && (
-        <div className="px-5 py-3 bg-indigo-950/30 border-b border-indigo-900/40 shrink-0">
-          <div className="max-w-3xl mx-auto flex flex-col sm:flex-row items-start sm:items-center gap-3">
-            <div className="flex-1 w-full">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[11px] font-semibold text-indigo-300 uppercase tracking-wider">
-                  Gemini API Key
-                </span>
-                <a
-                  href="https://aistudio.google.com/app/apikey"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-[11px] text-indigo-400 hover:text-indigo-300 underline underline-offset-2"
-                >
-                  Get free key from Google AI Studio ↗
-                </a>
-              </div>
-              <input
-                type="password"
-                value={geminiApiKey}
-                onChange={(e) => handleApiKeyChange(e.target.value)}
-                placeholder="AIzaSy... (stored securely only in your browser's localStorage)"
-                className="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-3.5 py-1.5 text-xs text-slate-100 placeholder:text-slate-500 font-mono focus:outline-none focus:border-indigo-500 shadow-inner"
-              />
-            </div>
-            {geminiApiKey.trim() && (
-              <button
-                onClick={() => setShowKeyInput(false)}
-                className="mt-4 sm:mt-4 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium transition shrink-0"
-              >
-                Save
-              </button>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* Main Conversation Stream */}
       <div className="flex-1 overflow-y-auto p-5 sm:p-8 space-y-6">

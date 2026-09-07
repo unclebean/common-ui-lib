@@ -522,7 +522,7 @@ export const Preview: StoryObj = {
                 model ||
                 process.env.GEMINI_MODEL ||
                 (process.env.STORYBOOK_AI_PROVIDER === "gemini" ? process.env.STORYBOOK_AI_MODEL : null) ||
-                "gemini-1.5-flash";
+                "gemini-3.6-flash";
               const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:generateContent?key=${key}`;
 
               // Transform messages to Gemini contents format
