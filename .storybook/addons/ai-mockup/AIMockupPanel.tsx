@@ -167,46 +167,53 @@ CRITICAL IMPORT RULES:
 
 MANDATORY RESPONSIVE WEB DESIGN RULES (CRITICAL):
 1. Canvas Viewport & Breakpoint Strategy:
-   - The Storybook Canvas is displayed alongside the 460px AI sidebar. On standard laptops, the canvas width is ~800px-950px!
-   - ALWAYS use "md:" (768px) or "sm:" (640px) as your primary breakpoint for multi-column layouts.
-   - NEVER use "lg:" or "xl:" as the ONLY breakpoint for multi-column grids! If you only use "lg:grid-cols-2" or "lg:grid-cols-12", the layout will collapse into a single vertical column when the user views the canvas with the AI panel open!
+   - The Storybook Canvas is displayed alongside the 460px AI sidebar. On standard laptops, canvas width is ~800px-1000px.
+   - ALWAYS use "md:" (768px) or "lg:" (1024px) cleanly. Never leave empty columns!
 
-2. Multi-Column Grid Patterns (Must adapt at md:):
-   - 2-Column: <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
-   - 4-Card KPI/Stats: <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-   - 3-Column / Trading Terminal / Multi-Pane Dashboard:
-     Use a fluid 12-column grid that works elegantly at 800px+ (md) as well as full-screen (lg):
-     <div className="grid grid-cols-1 md:grid-cols-12 gap-3 sm:gap-4">
-       <div className="col-span-1 md:col-span-4 lg:col-span-3 min-w-0">...Orderbook / Side Nav...</div>
-       <div className="col-span-1 md:col-span-8 lg:col-span-6 min-w-0">...Main Chart / Primary Feed...</div>
-       <div className="col-span-1 md:col-span-12 lg:col-span-3 min-w-0">...Order Ticket / Right Panel...</div>
+2. Grid Col-Span MUST ALWAYS Sum to Exactly 12 (NO ORPHAN COLUMNS):
+   Every row in a 12-column grid MUST fill all 12 columns across the screen:
+   - 2-Pane Layout (e.g. Orderbook + Chart, or Sidebar + Main Content):
+     MUST use 4 + 8 = 12 (or 5 + 7 = 12). DO NOT use 3 + 6, which leaves 3 columns blank!
+     <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 w-full">
+       <div className="col-span-1 lg:col-span-4 min-w-0">...Left Pane (Orderbook/Sidebar)...</div>
+       <div className="col-span-1 lg:col-span-8 min-w-0">...Right Pane (Chart/Main)...</div>
      </div>
+   - 3-Pane Trading Terminal (Orderbook + Chart + Order Execution):
+     If you use 3 columns, YOU MUST GENERATE ALL THREE PANES so they sum to 12 (3 + 6 + 3 = 12):
+     <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 w-full">
+       <div className="col-span-1 md:col-span-6 lg:col-span-3 min-w-0">...Orderbook...</div>
+       <div className="col-span-1 md:col-span-12 lg:col-span-6 min-w-0">...Main Chart...</div>
+       <div className="col-span-1 md:col-span-6 lg:col-span-3 min-w-0">...Order Execution...</div>
+     </div>
+   - KPI / Stat Cards (4 cards):
+     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 w-full">
 
-3. Overflow Protection & Min-Width Constraint:
-   - ALWAYS add "min-w-0" to every grid cell and flex child: <div className="... min-w-0">. Without min-w-0, flex/grid items fail to shrink, causing horizontal scroll blowout!
-   - NEVER use fixed pixel widths on cards or page containers (NO "w-[1200px]", NO "w-[500px]", NO "min-w-[800px]").
+3. NEVER Nest a <Card> Inside Another <Card>:
+   - "<PortfolioPerformanceChart />" and "<AssetHoldingsTable />" are ALREADY complete, self-contained <Card> components with their own borders, header, and padding.
+   - NEVER wrap <PortfolioPerformanceChart /> inside another <Card> or <CardContent>! That creates double padding and double borders, squashing the chart into an unreadable sliver.
+   - Directly render: <PortfolioPerformanceChart className="w-full" />
+
+4. Orderbook & Table Density:
+   - In compact orderbooks, use tight typography: <table className="w-full text-[11px] font-mono">
+   - Table headers and cells: <td className="py-0.5 px-2 text-right">
+   - If available width is under 350px, hide the "Total" column using className="hidden xl:table-cell" so Price and Size have plenty of breathing room.
+
+5. Overflow Protection & Min-Width Constraint:
+   - ALWAYS add "min-w-0" to every grid cell and flex child: <div className="... min-w-0">.
+   - NEVER use fixed pixel widths (NO "w-[1200px]", NO "w-[500px]", NO "min-w-[800px]").
    - Root Container: ALWAYS use fluid width with responsive padding:
      <div className="w-full max-w-7xl mx-auto p-2 sm:p-4 md:p-6 space-y-4 sm:space-y-6 min-w-0">
 
-4. Headers, Toolbars, and Ticker Strips:
+6. Headers, Toolbars, and Ticker Strips:
    - ALWAYS add "flex-wrap gap-2 sm:gap-3" to headers, filter strips, and button groups so controls wrap gracefully:
      <div className="flex flex-wrap items-center justify-between gap-3">
    - Fast tickers / badge strips: wrap in <div className="flex items-center gap-3 overflow-x-auto w-full pb-1">
 
-5. Data Tables & Lists:
-   - ALWAYS ensure tables and orderbook rows are scroll-protected:
-     <div className="overflow-x-auto w-full">
-       <table className="w-full text-xs ...">...</table>
-     </div>
-   - In tables, hide less important columns on mobile using "hidden sm:table-cell" or "hidden md:table-cell".
+7. Data Tables & Scroll Protection:
+   - ALWAYS wrap wide data tables in <div className="overflow-x-auto w-full">.
+   - On mobile/compact views, hide non-essential columns with "hidden sm:table-cell".
 
-6. Charts & Visualizations:
-   - Wrap Recharts / PortfolioPerformanceChart with responsive height and "w-full min-w-0":
-     <div className="w-full min-w-0 h-[260px] sm:h-[320px] md:h-[380px]">
-       <PortfolioPerformanceChart />
-     </div>
-
-7. Component Guidelines:
+8. Component Guidelines:
    - Avatar: Always wrap in <Avatar><AvatarFallback>XYZ</AvatarFallback></Avatar>
    - AssetHoldingsTable: Always pass <AssetHoldingsTable data={sampleHoldings} />
    - Root export: Always export default function MockupPage() { ... }

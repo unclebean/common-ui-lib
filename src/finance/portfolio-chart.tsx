@@ -1,5 +1,6 @@
 import * as React from "react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis, Pie, PieChart, Cell } from "recharts";
+import { cn } from "@/lib/utils";
 import {
   Card,
   CardContent,
@@ -55,15 +56,17 @@ const allocationConfig = {
 
 export function PortfolioPerformanceChart({ className }: { className?: string }) {
   return (
-    <Card className={className}>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle>Portfolio Growth</CardTitle>
-            <CardDescription>Historical Net Asset Value (NAV) vs Benchmark</CardDescription>
+    <Card className={cn("w-full min-w-0 overflow-hidden", className)}>
+      <CardHeader className="p-4 sm:p-6 pb-2 sm:pb-2">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <CardTitle className="text-base sm:text-lg font-semibold truncate">Portfolio Growth</CardTitle>
+            <CardDescription className="text-xs sm:text-sm truncate">
+              Historical Net Asset Value (NAV) vs Benchmark
+            </CardDescription>
           </div>
-          <div className="text-right">
-            <span className="text-2xl font-bold tracking-tight text-foreground font-mono">
+          <div className="text-right whitespace-nowrap">
+            <span className="text-xl sm:text-2xl font-bold tracking-tight text-foreground font-mono">
               $135,600
             </span>
             <span className="ml-2 text-xs font-semibold text-bullish">
@@ -72,8 +75,8 @@ export function PortfolioPerformanceChart({ className }: { className?: string })
           </div>
         </div>
       </CardHeader>
-      <CardContent>
-        <ChartContainer config={historyConfig} className="h-[280px] w-full">
+      <CardContent className="p-2 sm:p-6 pt-0 sm:pt-0">
+        <ChartContainer config={historyConfig} className="h-[280px] w-full min-w-0">
           <AreaChart
             data={portfolioHistoryData}
             margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
