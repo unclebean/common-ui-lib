@@ -41,11 +41,11 @@
 </style>
 
 <script>
-  // Safe version-based cache clearing for returning visitors
+  // Safe version-based cache clearing and initial layout initialization
   (function() {
     try {
       var vKey = 'sb_build_version';
-      var currentBuild = '20260907_v2';
+      var currentBuild = '20260907_v3';
       var storedBuild = localStorage.getItem(vKey);
       if (storedBuild !== currentBuild) {
         // Clean obsolete manager store and stale timestamps from previous deployments
@@ -54,6 +54,25 @@
         localStorage.removeItem('live_mockup_timestamp');
         localStorage.setItem(vKey, currentBuild);
       }
+
+      var key = '@storybook/manager/store';
+      ['localStorage', 'sessionStorage'].forEach(function(type) {
+        try {
+          var store = window[type];
+          if (!store) return;
+          var raw = store.getItem(key);
+          var parsed = raw ? JSON.parse(raw) : {};
+          if (!parsed.layout) parsed.layout = {};
+          parsed.layout.navSize = 0;
+          parsed.layout.showNav = false;
+          parsed.layout.showPanel = true;
+          parsed.layout.panelPosition = 'right';
+          if (!parsed.layout.recentVisibleSizes) {
+            parsed.layout.recentVisibleSizes = { navSize: 280, bottomPanelHeight: 300, rightPanelWidth: 460 };
+          }
+          store.setItem(key, JSON.stringify(parsed));
+        } catch(e) {}
+      });
     } catch(e) {}
   })();
 

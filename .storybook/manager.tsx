@@ -6,6 +6,7 @@ const ADDON_ID = "common-ui/ai-mockup-studio";
 const PANEL_ID = `${ADDON_ID}/panel`;
 
 addons.setConfig({
+  navSize: 0,
   showNav: false, // Hide left sidebar by default
   showPanel: true, // Keep AI assistant panel open
   panelPosition: "right",
@@ -23,27 +24,44 @@ addons.register(ADDON_ID, (api) => {
     ),
   });
 
-  // Ensure sidebar is hidden and AI panel is selected when Storybook boots up
-  api.on("STORYBOOK_READY", () => {
+  const collapseSidebar = () => {
     try {
       if (typeof api.getIsNavShown === "function" && api.getIsNavShown()) {
         if (typeof api.toggleNav === "function") {
           api.toggleNav(false);
         }
       } else if (typeof api.toggleNav === "function") {
-        // Double-check nav status
         const isShown = api.getState()?.layout?.navSize > 0;
         if (isShown) {
           api.toggleNav(false);
         }
       }
+
+      if (typeof api.setSizes === "function") {
+        api.setSizes({ navSize: 0, rightPanelWidth: 460, bottomPanelHeight: 300 });
+      }
+
       api.setOptions({
         showNav: false,
         showPanel: true,
       });
       api.setSelectedPanel(PANEL_ID);
     } catch {}
-  });
+  };
+
+  // 1. Initial attempt
+  collapseSidebar();
+
+  // 2. Delayed fallback attempts to ensure manager layout reflects navSize: 0
+  setTimeout(collapseSidebar, 50);
+  setTimeout(collapseSidebar, 200);
+  setTimeout(collapseSidebar, 500);
+
+  // 3. Listen to Storybook 8 core lifecycle events
+  api.on("setStories", collapseSidebar);
+  api.on("storySpecified", collapseSidebar);
+  api.on("storyRendered", collapseSidebar);
+  api.on("currentStoryWasSet", collapseSidebar);
 });
 
 
