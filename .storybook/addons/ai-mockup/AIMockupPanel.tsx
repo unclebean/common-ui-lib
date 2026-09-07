@@ -33,18 +33,14 @@ interface AIMockupPanelProps {
 export const AIMockupPanel: React.FC<AIMockupPanelProps> = ({ active, api, channel }) => {
   if (!active) return null;
 
-  // Configuration state
-  const [provider, setProvider] = React.useState<"ollama" | "gemini">("gemini");
-  const [model, setModel] = React.useState<string>("gemini-1.5-flash");
-  const [geminiDefaultModel, setGeminiDefaultModel] = React.useState<string>("gemini-1.5-flash");
-  const [ollamaDefaultModel, setOllamaDefaultModel] = React.useState<string>("llama3.2:latest");
-  const [hasServerGeminiKey, setHasServerGeminiKey] = React.useState<boolean>(false);
-  const [availableModels, setAvailableModels] = React.useState<string[]>([]);
+  // Configuration state (User provided)
   const [geminiApiKey, setGeminiApiKey] = React.useState<string>(() => {
     return localStorage.getItem("storybook_ai_gemini_key") || "";
   });
-  const [ollamaUrl, setOllamaUrl] = React.useState<string>("http://127.0.0.1:11434");
-  const [showSettings, setShowSettings] = React.useState<boolean>(false);
+  const [model, setModel] = React.useState<string>(() => {
+    return localStorage.getItem("storybook_ai_model") || "gemini-2.0-flash";
+  });
+  const [showKeyInput, setShowKeyInput] = React.useState<boolean>(false);
 
   // System Context & Chat state
   const [designSpec, setDesignSpec] = React.useState<string>("");
@@ -58,7 +54,7 @@ export const AIMockupPanel: React.FC<AIMockupPanelProps> = ({ active, api, chann
   const chatEndRef = React.useRef<HTMLDivElement>(null);
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
 
-  // Load server-configured .env context, design.md, and local Ollama models on mount
+  // Load design spec on mount
   React.useEffect(() => {
     fetch("/api/ai/context")
       .then((res) => res.json())
@@ -66,50 +62,19 @@ export const AIMockupPanel: React.FC<AIMockupPanelProps> = ({ active, api, chann
         if (data.designSpec) {
           setDesignSpec(data.designSpec);
         }
-        if (data.hasGeminiKey) {
-          setHasServerGeminiKey(true);
-        }
-        if (data.geminiModel) {
-          setGeminiDefaultModel(data.geminiModel);
-        }
-        if (data.ollamaModel) {
-          setOllamaDefaultModel(data.ollamaModel);
-        }
-        if (data.ollamaUrl) {
-          const storedUrl = localStorage.getItem("storybook_ai_ollama_url");
-          setOllamaUrl(storedUrl || data.ollamaUrl);
-        }
-
-        // Initialize provider and model from server .env or localStorage
-        const storedProvider = localStorage.getItem("storybook_ai_provider") as "ollama" | "gemini" | null;
-        const activeProvider = storedProvider || data.defaultProvider || "gemini";
-        setProvider(activeProvider);
-
-        const storedModel = localStorage.getItem("storybook_ai_model");
-        if (storedModel) {
-          setModel(storedModel);
-        } else if (activeProvider === "gemini") {
-          setModel(data.geminiModel || "gemini-1.5-flash");
-        } else {
-          setModel(data.ollamaModel || "llama3.2:latest");
-        }
-      })
-      .catch(() => {});
-
-    fetch("/api/ai/models")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.models && data.models.length > 0) {
-          setAvailableModels(data.models);
-        }
       })
       .catch(() => {});
   }, []);
 
-  // Sync API Key to localStorage
+  // Sync API Key & Model to localStorage
   const handleApiKeyChange = (val: string) => {
     setGeminiApiKey(val);
     localStorage.setItem("storybook_ai_gemini_key", val);
+  };
+
+  const handleModelChange = (val: string) => {
+    setModel(val);
+    localStorage.setItem("storybook_ai_model", val);
   };
 
   // Scroll chat to bottom
@@ -165,12 +130,24 @@ export const AIMockupPanel: React.FC<AIMockupPanelProps> = ({ active, api, chann
     const promptToSend = customPrompt || input;
     if (!promptToSend.trim() || isLoading) return;
 
+    if (!geminiApiKey.trim()) {
+      setShowKeyInput(true);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: "🔑 **Please enter your Gemini API Key first.**\n\nYou can get an API key for free from [Google AI Studio](https://aistudio.google.com/). Enter it in the input field above.",
+        },
+      ]);
+      return;
+    }
+
     const userMessage: Message = { role: "user", content: promptToSend };
     const newMessages = [...messages, userMessage];
     setMessages(newMessages);
     setInput("");
     setIsLoading(true);
-    setStatusMessage("Synthesizing UI with " + provider.toUpperCase() + "...");
+    setStatusMessage(`Synthesizing UI with ${model}...`);
 
     try {
       const systemInstruction = `You are an expert React Design System Engineer specialized in @common/ui-lib.
@@ -209,11 +186,10 @@ First provide a brief, friendly 1-2 sentence explanation of the design choices m
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          provider,
-          model: provider === "gemini" ? (model.includes("gemini") ? model : "gemini-1.5-flash") : model,
+          provider: "gemini",
+          model,
           messages: payloadMessages,
           apiKey: geminiApiKey,
-          ollamaUrl,
         }),
       });
 
@@ -356,6 +332,12 @@ First provide a brief, friendly 1-2 sentence explanation of the design choices m
     },
   ];
 
+  const modelOptions = [
+    { value: "gemini-2.0-flash", label: "Gemini 2.0 Flash (Fastest, Recommended)" },
+    { value: "gemini-1.5-flash", label: "Gemini 1.5 Flash" },
+    { value: "gemini-1.5-pro", label: "Gemini 1.5 Pro (Deep Reasoning)" },
+  ];
+
   return (
     <div className="flex flex-col h-full bg-[#0b0f19] text-slate-100 font-sans text-[13px] select-text overflow-hidden antialiased">
       {/* Top Header Bar */}
@@ -370,69 +352,48 @@ First provide a brief, friendly 1-2 sentence explanation of the design choices m
                 AI Mockup Studio
               </span>
               <span className="px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                design.md
+                Gemini
               </span>
             </div>
           </div>
         </div>
 
         <div className="flex items-center gap-2.5">
-          {/* Provider Toggle Pill */}
-          <div className="flex items-center bg-slate-900/90 p-1 rounded-xl border border-slate-800 shadow-inner">
-            <button
-              onClick={() => {
-                setProvider("ollama");
-                localStorage.setItem("storybook_ai_provider", "ollama");
-                const m = availableModels.length > 0 ? availableModels[0] : (ollamaDefaultModel || "llama3.2:latest");
-                setModel(m);
-                localStorage.setItem("storybook_ai_model", m);
-              }}
-              className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${
-                provider === "ollama"
-                  ? "bg-indigo-600 text-white shadow-sm"
-                  : "text-slate-400 hover:text-slate-200"
-              }`}
+          {/* Model Selector Dropdown */}
+          <div className="relative">
+            <select
+              value={model}
+              onChange={(e) => handleModelChange(e.target.value)}
+              className="bg-slate-900/90 text-slate-200 border border-slate-700/80 rounded-xl px-3 py-1.5 text-xs font-medium focus:outline-none focus:border-indigo-500 shadow-inner cursor-pointer"
             >
-              Ollama
-            </button>
-            <button
-              onClick={() => {
-                setProvider("gemini");
-                localStorage.setItem("storybook_ai_provider", "gemini");
-                const m = geminiDefaultModel || "gemini-1.5-flash";
-                setModel(m);
-                localStorage.setItem("storybook_ai_model", m);
-              }}
-              className={`px-3 py-1 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 ${
-                provider === "gemini"
-                  ? "bg-indigo-600 text-white shadow-sm"
-                  : "text-slate-400 hover:text-slate-200"
-              }`}
-            >
-              <span>Gemini</span>
-              {hasServerGeminiKey && (
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" title="API Key loaded from server .env" />
-              )}
-            </button>
+              {modelOptions.map((opt) => (
+                <option key={opt.value} value={opt.value} className="bg-slate-900 text-slate-200">
+                  {opt.label}
+                </option>
+              ))}
+            </select>
           </div>
 
-          {/* Model Status Capsule */}
-          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/60 border border-slate-800/80 text-slate-300 text-xs font-mono">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="truncate max-w-[140px]">{model}</span>
-          </div>
-
-          {/* Settings Button */}
+          {/* API Key Toggle Button */}
           <button
-            onClick={() => setShowSettings(!showSettings)}
-            className={`p-2 rounded-xl border transition-all ${
-              showSettings
-                ? "bg-indigo-600/20 border-indigo-500/40 text-indigo-300"
-                : "bg-slate-900/60 border-slate-800/80 text-slate-400 hover:text-slate-200 hover:border-slate-700"
+            onClick={() => setShowKeyInput(!showKeyInput)}
+            className={`px-3 py-1.5 rounded-xl border text-xs font-medium transition-all flex items-center gap-1.5 ${
+              geminiApiKey.trim()
+                ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/20"
+                : "bg-amber-500/10 border-amber-500/40 text-amber-300 animate-pulse hover:bg-amber-500/20"
             }`}
-            title="Configure Provider Settings"
+            title="Set Gemini API Key"
           >
-            <Settings2 className="w-4 h-4" />
+            {geminiApiKey.trim() ? (
+              <>
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                <span>API Key Configured</span>
+              </>
+            ) : (
+              <>
+                <span>🔑 Enter API Key</span>
+              </>
+            )}
           </button>
 
           {/* Clear Chat Button */}
@@ -448,117 +409,41 @@ First provide a brief, friendly 1-2 sentence explanation of the design choices m
         </div>
       </div>
 
-      {/* Settings Drawer (Collapsible) */}
-      {showSettings && (
-        <div className="p-4 bg-slate-950/95 border-b border-slate-800 grid grid-cols-1 md:grid-cols-3 gap-4 shrink-0 transition-all">
-          <div>
-            <label className="block text-[11px] text-slate-400 mb-1.5 uppercase tracking-wider font-semibold">
-              Selected Model
-            </label>
-            {provider === "ollama" && availableModels.length > 0 ? (
-              <select
-                value={model}
-                onChange={(e) => {
-                  setModel(e.target.value);
-                  localStorage.setItem("storybook_ai_model", e.target.value);
-                }}
-                className="w-full bg-slate-900 border border-slate-700/80 rounded-lg px-3 py-2 text-slate-200 text-xs focus:outline-none focus:border-indigo-500"
-              >
-                {availableModels.map((m) => (
-                  <option key={m} value={m}>
-                    {m}
-                  </option>
-                ))}
-              </select>
-            ) : provider === "gemini" ? (
-              <div className="space-y-1.5">
-                <input
-                  type="text"
-                  value={model}
-                  onChange={(e) => {
-                    setModel(e.target.value);
-                    localStorage.setItem("storybook_ai_model", e.target.value);
-                  }}
-                  className="w-full bg-slate-900 border border-slate-700/80 rounded-lg px-3 py-2 text-slate-200 text-xs focus:outline-none focus:border-indigo-500 font-mono"
-                  placeholder="gemini-1.5-flash"
-                />
-                <div className="flex items-center gap-1.5 text-[10px]">
-                  <span className="text-slate-500">Presets:</span>
-                  {["gemini-1.5-flash", "gemini-2.0-flash", "gemini-1.5-pro"].map((gm) => (
-                    <button
-                      key={gm}
-                      type="button"
-                      onClick={() => {
-                        setModel(gm);
-                        localStorage.setItem("storybook_ai_model", gm);
-                      }}
-                      className={`px-1.5 py-0.5 rounded border text-[10px] transition ${
-                        model === gm
-                          ? "bg-indigo-600/30 border-indigo-500/50 text-indigo-300"
-                          : "bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200"
-                      }`}
-                    >
-                      {gm.replace("gemini-", "")}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <input
-                type="text"
-                value={model}
-                onChange={(e) => {
-                  setModel(e.target.value);
-                  localStorage.setItem("storybook_ai_model", e.target.value);
-                }}
-                className="w-full bg-slate-900 border border-slate-700/80 rounded-lg px-3 py-2 text-slate-200 text-xs focus:outline-none focus:border-indigo-500"
-                placeholder="llama3.2:latest"
-              />
-            )}
-          </div>
-
-          {provider === "gemini" ? (
-            <div className="col-span-2">
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="text-[11px] text-slate-400 uppercase tracking-wider font-semibold">
+      {/* User API Key Input Drawer */}
+      {(!geminiApiKey.trim() || showKeyInput) && (
+        <div className="px-5 py-3 bg-indigo-950/30 border-b border-indigo-900/40 shrink-0">
+          <div className="max-w-3xl mx-auto flex flex-col sm:flex-row items-start sm:items-center gap-3">
+            <div className="flex-1 w-full">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[11px] font-semibold text-indigo-300 uppercase tracking-wider">
                   Gemini API Key
-                </label>
-                {hasServerGeminiKey && (
-                  <span className="text-[10px] text-emerald-400 flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3" />
-                    <span>Configured in server .env</span>
-                  </span>
-                )}
+                </span>
+                <a
+                  href="https://aistudio.google.com/app/apikey"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-[11px] text-indigo-400 hover:text-indigo-300 underline underline-offset-2"
+                >
+                  Get free key from Google AI Studio ↗
+                </a>
               </div>
               <input
                 type="password"
                 value={geminiApiKey}
                 onChange={(e) => handleApiKeyChange(e.target.value)}
-                className="w-full bg-slate-900 border border-slate-700/80 rounded-lg px-3 py-2 text-slate-200 text-xs focus:outline-none focus:border-indigo-500"
-                placeholder={
-                  hasServerGeminiKey
-                    ? "Using GEMINI_API_KEY from server .env (optional: enter key to override)"
-                    : "AIzaSy... (or set GEMINI_API_KEY in server .env)"
-                }
+                placeholder="AIzaSy... (stored securely only in your browser's localStorage)"
+                className="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-3.5 py-1.5 text-xs text-slate-100 placeholder:text-slate-500 font-mono focus:outline-none focus:border-indigo-500 shadow-inner"
               />
             </div>
-          ) : (
-            <div className="col-span-2">
-              <label className="block text-[11px] text-slate-400 mb-1.5 uppercase tracking-wider font-semibold">
-                Ollama Endpoint URL
-              </label>
-              <input
-                type="text"
-                value={ollamaUrl}
-                onChange={(e) => {
-                  setOllamaUrl(e.target.value);
-                  localStorage.setItem("storybook_ai_ollama_url", e.target.value);
-                }}
-                className="w-full bg-slate-900 border border-slate-700/80 rounded-lg px-3 py-2 text-slate-200 text-xs focus:outline-none focus:border-indigo-500"
-                placeholder="http://127.0.0.1:11434"
-              />
-            </div>
-          )}
+            {geminiApiKey.trim() && (
+              <button
+                onClick={() => setShowKeyInput(false)}
+                className="mt-4 sm:mt-4 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium transition shrink-0"
+              >
+                Save
+              </button>
+            )}
+          </div>
         </div>
       )}
 
