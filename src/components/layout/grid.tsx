@@ -17,11 +17,11 @@ export function Grid({
   const colsMap = {
     1: "grid-cols-1",
     2: "grid-cols-1 sm:grid-cols-2",
-    3: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3",
-    4: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4",
-    5: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-5",
-    6: "grid-cols-1 sm:grid-cols-3 lg:grid-cols-6",
-    12: "grid-cols-1 lg:grid-cols-12",
+    3: "grid-cols-1 sm:grid-cols-2 md:grid-cols-3",
+    4: "grid-cols-1 sm:grid-cols-2 md:grid-cols-4",
+    5: "grid-cols-1 sm:grid-cols-2 md:grid-cols-5",
+    6: "grid-cols-1 sm:grid-cols-3 md:grid-cols-6",
+    12: "grid-cols-1 md:grid-cols-12",
   };
 
   const gapMap = {
@@ -54,11 +54,11 @@ export function GridItem({
   const colSpanMap: Record<number, string> = {
     1: "col-span-1",
     2: "col-span-1 sm:col-span-2",
-    3: "col-span-1 lg:col-span-3",
-    4: "col-span-1 lg:col-span-4",
-    5: "col-span-1 lg:col-span-5",
+    3: "col-span-1 md:col-span-3",
+    4: "col-span-1 md:col-span-4",
+    5: "col-span-1 md:col-span-5",
     6: "col-span-1 md:col-span-6",
-    12: "col-span-1 lg:col-span-12",
+    12: "col-span-1 md:col-span-12",
   };
 
   return (

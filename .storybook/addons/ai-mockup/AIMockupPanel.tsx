@@ -166,41 +166,47 @@ CRITICAL IMPORT RULES:
   import { AssetHoldingsTable, sampleHoldings } from "@/finance/asset-table";
 
 MANDATORY RESPONSIVE WEB DESIGN RULES (CRITICAL):
-1. Mobile-First & Fluid Layouts:
-   - Root Container: ALWAYS use fluid width with responsive padding:
-     <div className="w-full max-w-7xl mx-auto p-3 sm:p-6 space-y-4 sm:space-y-6 min-w-0">
-   - NEVER use fixed pixel widths on root containers or cards (e.g., NO "w-[1800px]", NO "w-[1200px]", NO "w-[500px]").
-   - The Storybook Canvas is viewed alongside the 460px AI sidebar, so available canvas width varies from 600px to 1200px. All designs MUST look clean on narrow viewports!
+1. Canvas Viewport & Breakpoint Strategy:
+   - The Storybook Canvas is displayed alongside the 460px AI sidebar. On standard laptops, the canvas width is ~800px-950px!
+   - ALWAYS use "md:" (768px) or "sm:" (640px) as your primary breakpoint for multi-column layouts.
+   - NEVER use "lg:" or "xl:" as the ONLY breakpoint for multi-column grids! If you only use "lg:grid-cols-2" or "lg:grid-cols-12", the layout will collapse into a single vertical column when the user views the canvas with the AI panel open!
 
-2. Multi-Column Grids MUST Stack on Smaller Screens:
-   - 2-Column: <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-   - 3-Column / Trading Terminal: Use responsive grid classes:
-     <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-       <div className="col-span-1 lg:col-span-3 min-w-0">...Orderbook...</div>
-       <div className="col-span-1 lg:col-span-6 min-w-0">...Main Chart & Orders...</div>
-       <div className="col-span-1 lg:col-span-3 min-w-0">...Order Execution Form...</div>
+2. Multi-Column Grid Patterns (Must adapt at md:):
+   - 2-Column: <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+   - 4-Card KPI/Stats: <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+   - 3-Column / Trading Terminal / Multi-Pane Dashboard:
+     Use a fluid 12-column grid that works elegantly at 800px+ (md) as well as full-screen (lg):
+     <div className="grid grid-cols-1 md:grid-cols-12 gap-3 sm:gap-4">
+       <div className="col-span-1 md:col-span-4 lg:col-span-3 min-w-0">...Orderbook / Side Nav...</div>
+       <div className="col-span-1 md:col-span-8 lg:col-span-6 min-w-0">...Main Chart / Primary Feed...</div>
+       <div className="col-span-1 md:col-span-12 lg:col-span-3 min-w-0">...Order Ticket / Right Panel...</div>
      </div>
-   - KPI / Stat Cards (4 cards): <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
 
-3. Flexible Headers, Toolbars & Button Strips:
-   - ALWAYS add "flex-wrap" to header bars, filter strips, and button groups:
+3. Overflow Protection & Min-Width Constraint:
+   - ALWAYS add "min-w-0" to every grid cell and flex child: <div className="... min-w-0">. Without min-w-0, flex/grid items fail to shrink, causing horizontal scroll blowout!
+   - NEVER use fixed pixel widths on cards or page containers (NO "w-[1200px]", NO "w-[500px]", NO "min-w-[800px]").
+   - Root Container: ALWAYS use fluid width with responsive padding:
+     <div className="w-full max-w-7xl mx-auto p-2 sm:p-4 md:p-6 space-y-4 sm:space-y-6 min-w-0">
+
+4. Headers, Toolbars, and Ticker Strips:
+   - ALWAYS add "flex-wrap gap-2 sm:gap-3" to headers, filter strips, and button groups so controls wrap gracefully:
      <div className="flex flex-wrap items-center justify-between gap-3">
-   - Ticker stat strips: <div className="flex flex-wrap items-center gap-4 sm:gap-6 overflow-x-auto">
+   - Fast tickers / badge strips: wrap in <div className="flex items-center gap-3 overflow-x-auto w-full pb-1">
 
-4. Data Tables & Scroll Protection:
-   - ALWAYS wrap <table>, orderbook listings, and transaction histories in an overflow container:
+5. Data Tables & Lists:
+   - ALWAYS ensure tables and orderbook rows are scroll-protected:
      <div className="overflow-x-auto w-full">
        <table className="w-full text-xs ...">...</table>
      </div>
    - In tables, hide less important columns on mobile using "hidden sm:table-cell" or "hidden md:table-cell".
 
-5. Charts & Visualizations:
-   - Wrap Recharts / PortfolioPerformanceChart in a responsive height container with "w-full min-w-0":
-     <div className="w-full min-w-0 h-[280px] sm:h-[380px]">
+6. Charts & Visualizations:
+   - Wrap Recharts / PortfolioPerformanceChart with responsive height and "w-full min-w-0":
+     <div className="w-full min-w-0 h-[260px] sm:h-[320px] md:h-[380px]">
        <PortfolioPerformanceChart />
      </div>
 
-6. Component Guidelines:
+7. Component Guidelines:
    - Avatar: Always wrap in <Avatar><AvatarFallback>XYZ</AvatarFallback></Avatar>
    - AssetHoldingsTable: Always pass <AssetHoldingsTable data={sampleHoldings} />
    - Root export: Always export default function MockupPage() { ... }

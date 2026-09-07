@@ -387,7 +387,7 @@ function LiveCanvasWrapper() {
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       {/* Sticky In-Canvas Header Toolbar */}
-      <div className="sticky top-0 z-50 flex items-center justify-between px-6 py-2.5 bg-background/80 backdrop-blur-md border-b border-border text-xs">
+      <div className="sticky top-0 z-50 flex items-center justify-between px-3 sm:px-6 py-2 bg-background/80 backdrop-blur-md border-b border-border text-xs flex-wrap gap-2">
         <div className="flex items-center gap-2.5">
           <Badge
             variant="outline"
@@ -458,7 +458,7 @@ function LiveCanvasWrapper() {
       </div>
 
       {/* Main Render Area */}
-      <div ref={contentRef} className="flex-1 p-8">
+      <div ref={contentRef} className="flex-1 p-2 sm:p-4 md:p-6 w-full min-w-0 overflow-x-hidden">
         {compileError ? (
           <div className="p-8 max-w-xl mx-auto space-y-4">
             <Alert variant="destructive">
