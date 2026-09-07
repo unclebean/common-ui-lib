@@ -8,5 +8,5 @@
     "rootDir": "./src"
   },
   "include": ["src"],
-  "exclude": ["src/**/*.stories.tsx", "src/playground/**/*"]
+  "exclude": ["src/**/*.stories.tsx", "src/playground/**/*", "src/mockups/**/*"]
 }

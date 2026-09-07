@@ -89,3 +89,7 @@ export function HStack({
 }: Omit<StackProps, "direction">) {
   return <Stack direction="row" align="center" className={className} {...props} />;
 }
+
+// Re-export Container for resilient imports
+export { Container, type ContainerProps } from "./container";
+

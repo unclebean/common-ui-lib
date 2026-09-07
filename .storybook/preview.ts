@@ -16,6 +16,22 @@ const preview: Preview = {
         { name: "dark", value: "#020817" },
       ],
     },
+    options: {
+      storySort: {
+        order: [
+          "01. AI Mockups",
+          ["Live AI Canvas", "Trading Terminal", "*"],
+          "02. Brand Identity",
+          "03. Core Primitives",
+          "04. Forms & Controls",
+          "05. Overlays & Navigation",
+          "06. Layout & Shells",
+          "07. Finance Modules",
+          "08. Design Tokens",
+          "*",
+        ],
+      },
+    },
   },
   decorators: [
     (Story, context) => {

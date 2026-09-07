@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 import * as React from "react";
 
 const meta: Meta = {
-  title: "01. Design Tokens/Palette & Metrics",
+  title: "08. Design Tokens/Palette & Metrics",
 };
 
 export default meta;

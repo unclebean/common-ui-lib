@@ -1,4 +1,5 @@
 import type { StorybookConfig } from "@storybook/react-vite";
+import { aiMockupVitePlugin } from "./ai-vite-plugin";
 
 const config: StorybookConfig = {
   stories: ["../src/**/*.mdx", "../src/**/*.stories.@(js|jsx|mjs|ts|tsx)"],
@@ -6,6 +7,11 @@ const config: StorybookConfig = {
   framework: {
     name: "@storybook/react-vite",
     options: {},
+  },
+  async viteFinal(viteConfig) {
+    viteConfig.plugins = viteConfig.plugins || [];
+    viteConfig.plugins.push(aiMockupVitePlugin());
+    return viteConfig;
   },
 };
 
