@@ -41,27 +41,36 @@
 </style>
 
 <script>
-  // Ensure Storybook 8 sidebar is closed by default across storage
+  // Safe version-based cache clearing for returning visitors
   (function() {
     try {
-      var key = '@storybook/manager/store';
-      ['localStorage', 'sessionStorage'].forEach(function(type) {
-        try {
-          var store = window[type];
-          if (!store) return;
-          var raw = store.getItem(key);
-          var parsed = raw ? JSON.parse(raw) : {};
-          if (!parsed.layout) parsed.layout = {};
-          parsed.layout.navSize = 0;
-          parsed.layout.showNav = false;
-          parsed.layout.showPanel = true;
-          parsed.layout.panelPosition = 'right';
-          if (!parsed.layout.recentVisibleSizes) {
-            parsed.layout.recentVisibleSizes = { navSize: 280, bottomPanelHeight: 300, rightPanelWidth: 460 };
-          }
-          store.setItem(key, JSON.stringify(parsed));
-        } catch(e) {}
-      });
+      var vKey = 'sb_build_version';
+      var currentBuild = '20260907_v2';
+      var storedBuild = localStorage.getItem(vKey);
+      if (storedBuild !== currentBuild) {
+        // Clean obsolete manager store and stale timestamps from previous deployments
+        localStorage.removeItem('@storybook/manager/store');
+        sessionStorage.removeItem('@storybook/manager/store');
+        localStorage.removeItem('live_mockup_timestamp');
+        localStorage.setItem(vKey, currentBuild);
+      }
     } catch(e) {}
   })();
+
+  // Catch chunk loading errors caused by browser caching old HTML after deployment
+  window.addEventListener('error', function(e) {
+    var msg = (e && e.message) || '';
+    if (
+      msg.indexOf('dynamically imported module') !== -1 ||
+      msg.indexOf('importers[path]') !== -1 ||
+      msg.indexOf('Failed to fetch') !== -1 ||
+      msg.indexOf('Loading chunk') !== -1
+    ) {
+      var reloadKey = 'sb_reload_recovery';
+      if (!sessionStorage.getItem(reloadKey)) {
+        sessionStorage.setItem(reloadKey, '1');
+        window.location.reload();
+      }
+    }
+  });
 </script>
