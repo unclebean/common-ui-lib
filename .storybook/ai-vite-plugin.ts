@@ -571,12 +571,11 @@ export const Preview: StoryObj = {
                 return;
               }
 
-              const targetModel =
+              const primaryModel =
                 model ||
                 process.env.GEMINI_MODEL ||
                 (process.env.STORYBOOK_AI_PROVIDER === "gemini" ? process.env.STORYBOOK_AI_MODEL : null) ||
-                "gemini-3.6-flash";
-              const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:generateContent?key=${key}`;
+                "gemini-3.7-flash";
 
               // Transform messages to Gemini contents format
               const contents = messages
@@ -596,20 +595,47 @@ export const Preview: StoryObj = {
                 };
               }
 
-              const geminiRes = await fetch(geminiUrl, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(geminiBody),
-              });
+              // Pool of candidate models to try if primary model hits 429 quota or 503 capacity limit
+              const modelPool = Array.from(
+                new Set([
+                  primaryModel,
+                  "gemini-3.7-flash",
+                  "gemini-3.5-flash",
+                  "gemini-3.5-flash-lite",
+                  "gemini-3.1-flash-lite",
+                  "gemini-3.6-flash",
+                  "gemini-3.8-flash",
+                ])
+              );
 
-              if (!geminiRes.ok) {
-                const errData = await geminiRes.text();
-                throw new Error(`Gemini API error [${geminiRes.status}]: ${errData}`);
+              let lastErr = "";
+              let successfulData: any = null;
+
+              for (const currentModel of modelPool) {
+                const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:generateContent?key=${key}`;
+                const geminiRes = await fetch(geminiUrl, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(geminiBody),
+                }).catch((e) => ({ ok: false, status: 0, text: async () => e.message } as any));
+
+                if (geminiRes.ok) {
+                  successfulData = await geminiRes.json();
+                  break;
+                } else {
+                  lastErr = await geminiRes.text();
+                  if (geminiRes.status === 400 && lastErr.includes("API_KEY_INVALID")) {
+                    break;
+                  }
+                }
               }
 
-              const data: any = await geminiRes.json();
+              if (!successfulData) {
+                throw new Error(`Gemini API error: ${lastErr}`);
+              }
+
               const text =
-                data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+                successfulData.candidates?.[0]?.content?.parts?.[0]?.text || "";
 
               res.writeHead(200, { "Content-Type": "application/json" });
               res.end(

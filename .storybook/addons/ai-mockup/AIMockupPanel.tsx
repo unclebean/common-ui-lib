@@ -30,17 +30,28 @@ interface AIMockupPanelProps {
   channel?: any;
 }
 
+const GEMINI_MODELS = [
+  { value: "gemini-3.7-flash", label: "Gemini 3.7 Flash" },
+  { value: "gemini-3.5-flash", label: "Gemini 3.5 Flash" },
+  { value: "gemini-3.5-flash-lite", label: "Gemini 3.5 Flash-Lite" },
+  { value: "gemini-3.6-flash", label: "Gemini 3.6 Flash" },
+  { value: "gemini-3.8-flash", label: "Gemini 3.8 Flash" },
+  { value: "gemini-3.1-flash-lite", label: "Gemini 3.1 Flash-Lite" },
+];
+
 export const AIMockupPanel: React.FC<AIMockupPanelProps> = ({ active, api, channel }) => {
   if (!active) return null;
 
-  // Configuration state: strictly sanitize to gemini-3.6-flash
+  // Configuration state: default to gemini-3.7-flash or saved model from GEMINI_MODELS
   const [model, setModel] = React.useState<string>(() => {
     const saved = localStorage.getItem("storybook_ai_model");
-    if (saved !== "gemini-3.6-flash") {
+    const found = GEMINI_MODELS.find((m) => m.value === saved);
+    if (!found) {
+      const defaultModel = "gemini-3.7-flash";
       try {
-        localStorage.setItem("storybook_ai_model", "gemini-3.6-flash");
+        localStorage.setItem("storybook_ai_model", defaultModel);
       } catch {}
-      return "gemini-3.6-flash";
+      return defaultModel;
     }
     return saved;
   });
@@ -362,10 +373,6 @@ First provide a brief, friendly 1-2 sentence explanation of the design choices m
     },
   ];
 
-  const modelOptions = [
-    { value: "gemini-3.6-flash", label: "Gemini 3.6 Flash (Free Tier)" },
-  ];
-
   return (
     <div className="flex flex-col h-full bg-[#0b0f19] text-slate-100 font-sans text-[13px] select-text overflow-hidden antialiased">
       {/* Top Header Bar */}
@@ -394,7 +401,7 @@ First provide a brief, friendly 1-2 sentence explanation of the design choices m
               onChange={(e) => handleModelChange(e.target.value)}
               className="bg-slate-900/90 text-slate-200 border border-slate-700/80 rounded-xl px-3 py-1.5 text-xs font-medium focus:outline-none focus:border-indigo-500 shadow-inner cursor-pointer"
             >
-              {modelOptions.map((opt) => (
+              {GEMINI_MODELS.map((opt) => (
                 <option key={opt.value} value={opt.value} className="bg-slate-900 text-slate-200">
                   {opt.label}
                 </option>
