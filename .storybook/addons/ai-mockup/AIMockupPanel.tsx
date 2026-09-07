@@ -33,9 +33,16 @@ interface AIMockupPanelProps {
 export const AIMockupPanel: React.FC<AIMockupPanelProps> = ({ active, api, channel }) => {
   if (!active) return null;
 
-  // Configuration state
+  // Configuration state: strictly sanitize to gemini-3.6-flash
   const [model, setModel] = React.useState<string>(() => {
-    return localStorage.getItem("storybook_ai_model") || "gemini-3.6-flash";
+    const saved = localStorage.getItem("storybook_ai_model");
+    if (saved !== "gemini-3.6-flash") {
+      try {
+        localStorage.setItem("storybook_ai_model", "gemini-3.6-flash");
+      } catch {}
+      return "gemini-3.6-flash";
+    }
+    return saved;
   });
 
   // System Context & Chat state
@@ -356,10 +363,7 @@ First provide a brief, friendly 1-2 sentence explanation of the design choices m
   ];
 
   const modelOptions = [
-    { value: "gemini-3.6-flash", label: "Gemini 3.6 Flash (Default, Ultra Fast)" },
-    { value: "gemini-2.0-flash", label: "Gemini 2.0 Flash" },
-    { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro (Deep Reasoning)" },
-    { value: "gemini-1.5-flash", label: "Gemini 1.5 Flash" },
+    { value: "gemini-3.6-flash", label: "Gemini 3.6 Flash (Free Tier)" },
   ];
 
   return (

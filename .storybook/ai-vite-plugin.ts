@@ -299,7 +299,7 @@ export function aiMockupVitePlugin(): Plugin {
             const defaultGeminiModel =
               process.env.GEMINI_MODEL ||
               (process.env.STORYBOOK_AI_PROVIDER === "gemini" ? process.env.STORYBOOK_AI_MODEL : null) ||
-              "gemini-1.5-flash";
+              "gemini-3.6-flash";
 
             const defaultOllamaModel =
               process.env.OLLAMA_MODEL ||
