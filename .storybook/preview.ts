@@ -17,6 +17,9 @@ const preview: Preview = {
       ],
     },
     options: {
+      showNav: false,
+      showPanel: true,
+      panelPosition: "right",
       storySort: {
         order: [
           "01. AI Mockups",

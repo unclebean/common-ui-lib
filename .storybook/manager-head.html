@@ -32,4 +32,36 @@
   ::-webkit-scrollbar-thumb:hover {
     background: rgba(148, 163, 184, 0.4);
   }
+
+  /* Auto-collapse sidebar visually if Storybook persisted state in localStorage */
+  body[data-nav-hidden="true"] [data-side="left"],
+  body[data-nav-hidden="true"] aside[aria-label="Stories"] {
+    display: none !important;
+  }
 </style>
+
+<script>
+  // Ensure Storybook 8 sidebar is closed by default across storage
+  (function() {
+    try {
+      var key = '@storybook/manager/store';
+      ['localStorage', 'sessionStorage'].forEach(function(type) {
+        try {
+          var store = window[type];
+          if (!store) return;
+          var raw = store.getItem(key);
+          var parsed = raw ? JSON.parse(raw) : {};
+          if (!parsed.layout) parsed.layout = {};
+          parsed.layout.navSize = 0;
+          parsed.layout.showNav = false;
+          parsed.layout.showPanel = true;
+          parsed.layout.panelPosition = 'right';
+          if (!parsed.layout.recentVisibleSizes) {
+            parsed.layout.recentVisibleSizes = { navSize: 280, bottomPanelHeight: 300, rightPanelWidth: 460 };
+          }
+          store.setItem(key, JSON.stringify(parsed));
+        } catch(e) {}
+      });
+    } catch(e) {}
+  })();
+</script>

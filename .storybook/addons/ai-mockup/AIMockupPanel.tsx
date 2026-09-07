@@ -199,38 +199,31 @@ First provide a brief, friendly 1-2 sentence explanation of the design choices m
     }
   };
 
-  // Instantly render mockup into the live Storybook Canvas
+  // Instantly render mockup into the live Storybook Canvas (Session-isolated, zero disk writes)
   const handleRenderToCanvas = async (code: string) => {
     try {
       setStatusMessage("Mounting mockup into Storybook Canvas...");
-      const res = await fetch("/api/ai/live-update", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code }),
-      });
 
-      if (res.ok) {
-        const ts = Date.now();
+      // 1. Emit code over Storybook Addon Channel to the preview iframe
+      const ch = channel || (api && typeof api.getChannel === "function" ? api.getChannel() : null);
+      if (ch && typeof ch.emit === "function") {
+        ch.emit("AI_LIVE_CODE_UPDATE", { code });
+      }
 
-        try {
-          localStorage.setItem("live_mockup_timestamp", String(ts));
-        } catch (storageErr) {}
-
-        const ch = channel || (api && typeof api.getChannel === "function" ? api.getChannel() : null);
-        if (ch && typeof ch.emit === "function") {
-          ch.emit("AI_MOCKUP_UPDATED", { timestamp: ts });
+      // 2. Also dispatch postMessage to preview iframe
+      try {
+        const iframe = document.querySelector<HTMLIFrameElement>("#storybook-preview-iframe");
+        if (iframe && iframe.contentWindow) {
+          iframe.contentWindow.postMessage({ type: "AI_LIVE_CODE_UPDATE", code }, "*");
         }
-        if (api && typeof api.emit === "function") {
-          api.emit("AI_MOCKUP_UPDATED", { timestamp: ts });
-        }
+      } catch {}
 
-        // Only switch story if not currently on the Live AI Canvas story
-        if (api && typeof api.getCurrentStoryData === "function") {
-          const currentStory = api.getCurrentStoryData();
-          if (currentStory?.id !== "01-ai-mockups-live-ai-canvas--default") {
-            if (typeof api.selectStory === "function") {
-              api.selectStory("01-ai-mockups-live-ai-canvas--default");
-            }
+      // 3. Switch story if not currently on Live AI Canvas
+      if (api && typeof api.getCurrentStoryData === "function") {
+        const currentStory = api.getCurrentStoryData();
+        if (currentStory?.id !== "01-ai-mockups-live-ai-canvas--default") {
+          if (typeof api.selectStory === "function") {
+            api.selectStory("01-ai-mockups-live-ai-canvas--default");
           }
         }
       }
@@ -251,18 +244,14 @@ First provide a brief, friendly 1-2 sentence explanation of the design choices m
   // Reset conversation and return Canvas to blank slate
   const handleReset = async () => {
     setMessages([]);
+    const ch = channel || (api && typeof api.getChannel === "function" ? api.getChannel() : null);
+    if (ch && typeof ch.emit === "function") {
+      ch.emit("AI_LIVE_CODE_UPDATE", { code: null });
+    }
     try {
-      await fetch("/api/ai/reset", { method: "POST" });
-      const ts = Date.now();
-      try {
-        localStorage.setItem("live_mockup_timestamp", String(ts));
-      } catch {}
-      const ch = channel || (api && typeof api.getChannel === "function" ? api.getChannel() : null);
-      if (ch && typeof ch.emit === "function") {
-        ch.emit("AI_MOCKUP_UPDATED", { timestamp: ts });
-      }
-      if (api && typeof api.emit === "function") {
-        api.emit("AI_MOCKUP_UPDATED", { timestamp: ts });
+      const iframe = document.querySelector<HTMLIFrameElement>("#storybook-preview-iframe");
+      if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.postMessage({ type: "AI_LIVE_CODE_UPDATE", code: null }, "*");
       }
     } catch {}
   };

@@ -35,4 +35,3 @@ export default function MockupPage() {
 if (import.meta.hot) {
   import.meta.hot.accept();
 }
-

@@ -6,7 +6,8 @@ const ADDON_ID = "common-ui/ai-mockup-studio";
 const PANEL_ID = `${ADDON_ID}/panel`;
 
 addons.setConfig({
-  showPanel: true,
+  showNav: false, // Hide left sidebar by default
+  showPanel: true, // Keep AI assistant panel open
   panelPosition: "right",
   selectedPanel: PANEL_ID,
   rightPanelWidth: 460,
@@ -22,12 +23,27 @@ addons.register(ADDON_ID, (api) => {
     ),
   });
 
-  // Ensure our panel is selected when Storybook boots up
+  // Ensure sidebar is hidden and AI panel is selected when Storybook boots up
   api.on("STORYBOOK_READY", () => {
     try {
+      if (typeof api.getIsNavShown === "function" && api.getIsNavShown()) {
+        if (typeof api.toggleNav === "function") {
+          api.toggleNav(false);
+        }
+      } else if (typeof api.toggleNav === "function") {
+        // Double-check nav status
+        const isShown = api.getState()?.layout?.navSize > 0;
+        if (isShown) {
+          api.toggleNav(false);
+        }
+      }
+      api.setOptions({
+        showNav: false,
+        showPanel: true,
+      });
       api.setSelectedPanel(PANEL_ID);
-      api.setOptions({ showPanel: true });
     } catch {}
   });
 });
+
 
