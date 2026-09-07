@@ -129,13 +129,13 @@ export const AIMockupPanel: React.FC<AIMockupPanelProps> = ({ active, api, chann
 
     try {
       const systemInstruction = `You are an expert React Design System Engineer specialized in @common/ui-lib.
-Your task is to generate complete, aesthetic, production-ready mockup pages in TypeScript (.tsx).
+Your task is to generate complete, aesthetic, 100% production-ready, fully responsive mockup pages in TypeScript (.tsx).
 
 CRITICAL IMPORT RULES:
 - NEVER import "Badge", "Grid", "Button", "Card", "Avatar", or other UI components from "lucide-react"! "Badge" is from "@/components/ui/badge", "Grid" is from "@/components/layout/grid". Only import pure visual iconography from "lucide-react".
 - ALWAYS use named imports for components:
-  import React from "react";
-  import { TrendingUp, ArrowUpRight, ArrowDownRight, Wallet, Shield, Activity, BarChart2 } from "lucide-react";
+  import React, { useState } from "react";
+  import { TrendingUp, ArrowUpRight, ArrowDownRight, Wallet, Shield, Activity, BarChart2, Layers, Search, Bell, Settings } from "lucide-react";
   import { Button } from "@/components/ui/button";
   import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
   import { Badge } from "@/components/ui/badge";
@@ -147,16 +147,54 @@ CRITICAL IMPORT RULES:
   import { PortfolioPerformanceChart } from "@/finance/portfolio-chart";
   import { AssetHoldingsTable, sampleHoldings } from "@/finance/asset-table";
 
-LAYOUT USAGE RULES:
-- Grid: Use <Grid cols={3} gap="lg"><GridItem colSpan={1}>...</GridItem></Grid>
-- Avatar: Always wrap in <Avatar><AvatarFallback>XYZ</AvatarFallback></Avatar>
-- AssetHoldingsTable: Always pass <AssetHoldingsTable data={sampleHoldings} />
-- Root export: Always export default function MockupPage() { return (<div className="space-y-6 max-w-7xl mx-auto">...</div>); }
+MANDATORY RESPONSIVE WEB DESIGN RULES (CRITICAL):
+1. Mobile-First & Fluid Layouts:
+   - Root Container: ALWAYS use fluid width with responsive padding:
+     <div className="w-full max-w-7xl mx-auto p-3 sm:p-6 space-y-4 sm:space-y-6 min-w-0">
+   - NEVER use fixed pixel widths on root containers or cards (e.g., NO "w-[1800px]", NO "w-[1200px]", NO "w-[500px]").
+   - The Storybook Canvas is viewed alongside the 460px AI sidebar, so available canvas width varies from 600px to 1200px. All designs MUST look clean on narrow viewports!
+
+2. Multi-Column Grids MUST Stack on Smaller Screens:
+   - 2-Column: <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+   - 3-Column / Trading Terminal: Use responsive grid classes:
+     <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+       <div className="col-span-1 lg:col-span-3 min-w-0">...Orderbook...</div>
+       <div className="col-span-1 lg:col-span-6 min-w-0">...Main Chart & Orders...</div>
+       <div className="col-span-1 lg:col-span-3 min-w-0">...Order Execution Form...</div>
+     </div>
+   - KPI / Stat Cards (4 cards): <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+
+3. Flexible Headers, Toolbars & Button Strips:
+   - ALWAYS add "flex-wrap" to header bars, filter strips, and button groups:
+     <div className="flex flex-wrap items-center justify-between gap-3">
+   - Ticker stat strips: <div className="flex flex-wrap items-center gap-4 sm:gap-6 overflow-x-auto">
+
+4. Data Tables & Scroll Protection:
+   - ALWAYS wrap <table>, orderbook listings, and transaction histories in an overflow container:
+     <div className="overflow-x-auto w-full">
+       <table className="w-full text-xs ...">...</table>
+     </div>
+   - In tables, hide less important columns on mobile using "hidden sm:table-cell" or "hidden md:table-cell".
+
+5. Charts & Visualizations:
+   - Wrap Recharts / PortfolioPerformanceChart in a responsive height container with "w-full min-w-0":
+     <div className="w-full min-w-0 h-[280px] sm:h-[380px]">
+       <PortfolioPerformanceChart />
+     </div>
+
+6. Component Guidelines:
+   - Avatar: Always wrap in <Avatar><AvatarFallback>XYZ</AvatarFallback></Avatar>
+   - AssetHoldingsTable: Always pass <AssetHoldingsTable data={sampleHoldings} />
+   - Root export: Always export default function MockupPage() { ... }
 
 First provide a brief, friendly 1-2 sentence explanation of the design choices made, then wrap the complete code inside a single \`\`\`tsx ... \`\`\` block.`;
 
+      const fullSystemPrompt = designSpec
+        ? `${systemInstruction}\n\nDESIGN SYSTEM TOKENS & SPECS (from design.md):\n${designSpec}`
+        : systemInstruction;
+
       const payloadMessages = [
-        { role: "system", content: systemInstruction },
+        { role: "system", content: fullSystemPrompt },
         ...newMessages,
       ];
 
@@ -295,25 +333,25 @@ First provide a brief, friendly 1-2 sentence explanation of the design choices m
       icon: TrendingUp,
       title: "Crypto Spot Trading Terminal",
       desc: "Orderbook depth, live pair ticker, and limit order entry",
-      prompt: "Create a modern Crypto Spot Trading Terminal with orderbook, live pair ticker, chart, and order entry form.",
+      prompt: "Create a modern, fully responsive Crypto Spot Trading Terminal with orderbook, live pair ticker, chart, and order entry form. Ensure it stacks gracefully on mobile and expands to a 3-column layout on desktop.",
     },
     {
       icon: PieChart,
       title: "Portfolio Rebalancing & Allocation",
       desc: "Asset allocation donut chart, target weights, and asset table",
-      prompt: "Create a Portfolio Rebalancing and Asset Allocation dashboard with charts, holding weights, and rebalance buttons.",
+      prompt: "Create a modern, fully responsive Portfolio Rebalancing and Asset Allocation dashboard with charts, holding weights, and rebalance buttons.",
     },
     {
       icon: ShieldCheck,
       title: "Institutional Security & KYC",
       desc: "Tier verification levels, security audit logs, and 2FA settings",
-      prompt: "Create an Institutional Security and KYC verification center with verification progress, identity forms, and audit logs.",
+      prompt: "Create an Institutional Security and KYC verification center with responsive verification progress, identity forms, and audit logs.",
     },
     {
       icon: Zap,
       title: "Automated DCA Investment Strategy",
       desc: "Recurring schedule cards, execution history, and P&L metrics",
-      prompt: "Create an Automated DCA (Dollar Cost Averaging) strategy setup screen with recurring buy intervals, funding source, and profit projection.",
+      prompt: "Create an Automated DCA (Dollar Cost Averaging) strategy setup screen with responsive recurring buy intervals, funding source, and profit projection.",
     },
   ];
 
