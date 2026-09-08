@@ -65,34 +65,79 @@
   };
 </script>
 
+<!-- Prevent aggressive browser/CDN caching of iframe.html -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
+
 <script>
-  // Catch chunk loading errors caused by browser caching old iframe.html after deployment
+  // Catch chunk loading errors caused by browser caching old HTML/chunks after deployment
   (function() {
-    function handleChunkError(msg) {
-      if (
-        msg.indexOf('dynamically imported module') !== -1 ||
-        msg.indexOf('importers[path]') !== -1 ||
-        msg.indexOf('Failed to fetch') !== -1 ||
-        msg.indexOf('Loading chunk') !== -1
-      ) {
-        var reloadKey = 'sb_preview_reload_recovery';
-        var last = sessionStorage.getItem(reloadKey);
+    function triggerBustReload(reason) {
+      try {
         var now = Date.now();
-        if (!last || (now - parseInt(last, 10)) > 10000) {
-          sessionStorage.setItem(reloadKey, String(now));
-          window.location.reload();
+        var key = 'sb_cache_bust_ts';
+        var last = sessionStorage.getItem(key);
+        // Debounce: allow max 2 reloads within 10 seconds to avoid infinite loops
+        if (last && (now - parseInt(last, 10)) < 4000) {
+          return;
         }
+        sessionStorage.setItem(key, String(now));
+
+        // Clean stale Storybook manager store to reset any broken state
+        try {
+          localStorage.removeItem('@storybook/manager/store');
+          sessionStorage.removeItem('@storybook/manager/store');
+          localStorage.removeItem('live_mockup_timestamp');
+        } catch(e) {}
+
+        // Notify parent/top window if in iframe
+        try {
+          if (window.parent && window.parent !== window) {
+            window.parent.postMessage({ type: 'SB_RELOAD_FRESH', reason: String(reason || '') }, '*');
+          }
+        } catch(e) {}
+
+        // Hard reload top-level window with cache buster query param
+        var targetWindow = (window.top && window.top.location) ? window.top : window;
+        var currentUrl = new URL(targetWindow.location.href);
+        currentUrl.searchParams.set('_sb_bust', String(now));
+        targetWindow.location.replace(currentUrl.toString());
+      } catch(err) {
+        window.location.reload();
       }
     }
 
-    window.addEventListener('error', function(e) {
-      handleChunkError((e && e.message) || '');
+    function checkError(msg) {
+      if (!msg) return;
+      var str = String(msg);
+      if (
+        str.indexOf('dynamically imported module') !== -1 ||
+        str.indexOf('importers[path]') !== -1 ||
+        str.indexOf('Failed to fetch') !== -1 ||
+        str.indexOf('Loading chunk') !== -1 ||
+        str.indexOf('LiveAICanvas.stories') !== -1 ||
+        str.indexOf('404') !== -1
+      ) {
+        triggerBustReload(str);
+      }
+    }
+
+    // 1. Official Vite dynamic import failure event
+    window.addEventListener('vite:preloadError', function(event) {
+      if (event && event.preventDefault) event.preventDefault();
+      triggerBustReload('vite:preloadError');
     });
 
+    // 2. Global JS error handler
+    window.addEventListener('error', function(e) {
+      checkError((e && e.message) || (e && e.error && e.error.message) || '');
+    });
+
+    // 3. Unhandled promise rejections
     window.addEventListener('unhandledrejection', function(e) {
       var reason = e && e.reason;
-      var msg = (reason && reason.message) || String(reason || '');
-      handleChunkError(msg);
+      checkError((reason && reason.message) || String(reason || ''));
     });
   })();
 </script>
