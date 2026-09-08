@@ -523,7 +523,7 @@ First provide a brief, friendly 1-2 sentence explanation of the design choices m
                   }`}
                 >
                   {textWithoutCode ? (
-                    <div className="whitespace-pre-wrap leading-relaxed text-xs sm:text-[13px]">
+                    <div className="whitespace-pre-wrap leading-relaxed text-xs sm:text-[13px] [overflow-wrap:anywhere]">
                       {textWithoutCode}
                     </div>
                   ) : (
