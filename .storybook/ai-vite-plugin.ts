@@ -286,6 +286,37 @@ export function aiMockupVitePlugin(): Plugin {
 
 
 
+      // Smart fallback resolver for pre-bundled dependency chunks if browser requested older hash
+      server.middlewares.use((req, res, next) => {
+        const url = req.url || "";
+        if (url.includes("/sb-vite/deps/")) {
+          const cleanUrl = url.split("?")[0];
+          const localPath = path.resolve(process.cwd(), cleanUrl.replace(/^\//, ""));
+          if (!fs.existsSync(localPath)) {
+            const depsDir = path.dirname(localPath);
+            if (fs.existsSync(depsDir)) {
+              const baseName = path.basename(cleanUrl);
+              const prefix = baseName.replace(/-[A-Za-z0-9_]+\.js$/i, "");
+              const allFiles = fs.readdirSync(depsDir);
+              const match = allFiles.find(
+                (f) => f.startsWith(prefix) && f.endsWith(".js")
+              );
+              if (match) {
+                const targetFile = path.join(depsDir, match);
+                const content = fs.readFileSync(targetFile, "utf8");
+                res.writeHead(200, {
+                  "Content-Type": "application/javascript; charset=utf-8",
+                  "Cache-Control": "no-cache, no-store, must-revalidate",
+                });
+                res.end(content);
+                return;
+              }
+            }
+          }
+        }
+        next();
+      });
+
       server.middlewares.use(async (req, res, next) => {
         const url = req.url || "";
 
