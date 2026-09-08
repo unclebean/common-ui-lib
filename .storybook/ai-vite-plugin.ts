@@ -2,6 +2,7 @@ import type { Plugin } from "vite";
 import * as fs from "fs";
 import * as path from "path";
 import * as lucide from "lucide-react";
+import { runGeminiWithMcp } from "../src/server/mcp";
 
 const lucideSet = new Set(Object.keys(lucide));
 
@@ -625,71 +626,13 @@ export const Preview: StoryObj = {
                 return;
               }
 
-              const primaryModel =
-                model ||
-                process.env.GEMINI_MODEL ||
-                (process.env.STORYBOOK_AI_PROVIDER === "gemini" ? process.env.STORYBOOK_AI_MODEL : null) ||
-                "gemini-3.7-flash";
-
-              // Transform messages to Gemini contents format
-              const contents = messages
-                .filter((m: any) => m.role !== "system")
-                .map((m: any) => ({
-                  role: m.role === "assistant" ? "model" : "user",
-                  parts: [{ text: m.content }],
-                }));
-
-              // Extract system instruction if present
               const systemMsg = messages.find((m: any) => m.role === "system");
-
-              const geminiBody: any = { contents };
-              if (systemMsg) {
-                geminiBody.systemInstruction = {
-                  parts: [{ text: systemMsg.content }],
-                };
-              }
-
-              // Pool of candidate models to try if primary model hits 429 quota or 503 capacity limit
-              const modelPool = Array.from(
-                new Set([
-                  primaryModel,
-                  "gemini-3.7-flash",
-                  "gemini-3.5-flash",
-                  "gemini-3.5-flash-lite",
-                  "gemini-3.1-flash-lite",
-                  "gemini-3.6-flash",
-                  "gemini-3.8-flash",
-                ])
-              );
-
-              let lastErr = "";
-              let successfulData: any = null;
-
-              for (const currentModel of modelPool) {
-                const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:generateContent?key=${key}`;
-                const geminiRes = await fetch(geminiUrl, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify(geminiBody),
-                }).catch((e) => ({ ok: false, status: 0, text: async () => e.message } as any));
-
-                if (geminiRes.ok) {
-                  successfulData = await geminiRes.json();
-                  break;
-                } else {
-                  lastErr = await geminiRes.text();
-                  if (geminiRes.status === 400 && lastErr.includes("API_KEY_INVALID")) {
-                    break;
-                  }
-                }
-              }
-
-              if (!successfulData) {
-                throw new Error(`Gemini API error: ${lastErr}`);
-              }
-
-              const text =
-                successfulData.candidates?.[0]?.content?.parts?.[0]?.text || "";
+              const text = await runGeminiWithMcp({
+                messages,
+                systemInstruction: systemMsg ? systemMsg.content : undefined,
+                model,
+                apiKey: key,
+              });
 
               res.writeHead(200, { "Content-Type": "application/json" });
               res.end(
