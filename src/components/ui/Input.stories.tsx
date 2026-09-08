@@ -42,3 +42,14 @@ export const Disabled: Story = {
     value: "Read-only Portfolio ID: #PORT-9821",
   },
 };
+
+export const WithStartIcon: StoryObj = {
+  render: () => (
+    <div className="p-8 max-w-sm">
+      <Input
+        startIcon={<Search />}
+        placeholder="Filter tasks..."
+      />
+    </div>
+  ),
+};
