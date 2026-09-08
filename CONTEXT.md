@@ -64,10 +64,11 @@ All styling relies on semantic CSS variables mapped to Tailwind utility classes.
 
 > [!IMPORTANT]
 > **Strict Rules for Clean Responsive Layouts:**
-> 1. **The 12-Column Sum Rule**: In any row, child column spans MUST sum to 12 (`8 + 4`, `6 + 6`, `4 + 4 + 4`, `3 + 3 + 3 + 3`).
-> 2. **Mobile First**: Always specify `base: 12` so mobile devices stack vertically, e.g. `span={{ base: 12, lg: 8 }}` and `span={{ base: 12, lg: 4 }}`.
-> 3. **The `min-w-0` Rule**: Every grid item or flex child containing tables, candlestick charts, or long text MUST include `min-w-0` to prevent horizontal container blowouts.
-> 4. **No Double Wrapping**: Never wrap an entire dashboard mockup in an outer full-page `Card`. Use `Container` or clean grid layout.
+> 1. **Storybook Canvas Viewport (~800px-1000px)**: Because Storybook opens a 460px AI sidebar on laptops, the active preview canvas is between 800px and 1000px. **Always use `md:` (768px) as the primary multi-column breakpoint**; do not rely solely on `lg:` (1024px) for 2-column layouts.
+> 2. **Base Mobile Class MUST be `col-span-12`**: In a 12-column grid, **NEVER use `col-span-1` as the base mobile span**! `col-span-1` takes only 8.33% of screen width and squashes items into illegible 80px slivers. Always use `col-span-12` so items stack full width on small screens.
+> 3. **The 12-Column Sum Rule**: In any row, child column spans MUST sum to 12 across the row (`8 + 4`, `6 + 6`, `4 + 4 + 4`, `3 + 6 + 3`). Never leave empty columns.
+> 4. **The `min-w-0` Rule**: Every grid item or flex child containing tables, candlestick charts, or long text MUST include `min-w-0` to prevent horizontal container blowouts.
+> 5. **No Double Wrapping**: `<CandlestickChart>`, `<PortfolioPerformanceChart>`, and `<AssetHoldingsTable>` are already self-contained Card components with headers, borders, and padding. NEVER wrap them inside an outer `<Card>` or `<CardContent>`.
 
 ### 3.1 Layout Primitives
 
@@ -76,8 +77,8 @@ import { Container } from "@/components/layout/container";
 // Props: size?: "sm" | "md" | "lg" | "xl" | "full", className?: string
 
 import { Grid, GridItem } from "@/components/layout/grid";
-// Grid Props: cols?: number (default 12), gap?: "none" | "sm" | "md" | "lg" | "xl", className?: string
-// GridItem Props: span?: number | { base?: number; sm?: number; md?: number; lg?: number; xl?: number }, colStart?: number
+// Grid Props: cols?: 1 | 2 | 3 | 4 | 5 | 6 | 12 (default 3), gap?: "none" | "sm" | "md" | "lg" | "xl", className?: string
+// GridItem Props: colSpan?: 1..12, span?: number | { base?: number; sm?: number; md?: number; lg?: number; xl?: number }, rowSpan?: 1..4
 
 import { Stack, VStack, HStack } from "@/components/layout/stack";
 // Props: spacing?: "none" | "xs" | "sm" | "md" | "lg" | "xl", align?: "start" | "center" | "end" | "stretch", justify?: ...
@@ -88,34 +89,53 @@ import { PageHeader } from "@/components/layout/page-header";
 import { DashboardShell, SidebarNav } from "@/components/layout/dashboard-shell";
 ```
 
-### 3.2 Canonical Dashboard Grid Pattern
+### 3.2 Canonical Dashboard Grid Patterns
 
+#### A. 2-Pane Layout (Main Content + Sidebar)
 ```tsx
-<Container size="full" className="p-4 sm:p-6 space-y-6">
-  <PageHeader
-    title="Trading Terminal"
-    description="Real-time multi-asset market data and execution"
-    action={<Button className="gap-2"><Plus className="h-4 w-4" /> Deposit Funds</Button>}
-  />
+<div className="grid grid-cols-12 gap-4 w-full">
+  {/* Left Main Panel: Chart + Table (8 cols on desktop) */}
+  <div className="col-span-12 md:col-span-8 min-w-0 space-y-6">
+    <CandlestickChart symbol="BTC / USDT" height={400} />
+    <AssetHoldingsTable data={sampleHoldings} />
+  </div>
 
-  <Grid cols={12} gap="lg">
-    {/* Left Main Panel: Chart + Table (8 cols on desktop) */}
-    <GridItem span={{ base: 12, lg: 8 }} className="min-w-0 space-y-6">
-      <CandlestickChart symbol="BTC / USDT" height={400} />
-      <AssetHoldingsTable data={sampleHoldings} />
-    </GridItem>
+  {/* Right Sidebar: Order Form & KPIs (4 cols on desktop) */}
+  <div className="col-span-12 md:col-span-4 min-w-0 space-y-6">
+    <Card>
+      <CardHeader>
+        <CardTitle>Order Ticket</CardTitle>
+      </CardHeader>
+      <CardContent>{/* Buy/Sell form controls */}</CardContent>
+    </Card>
+  </div>
+</div>
+```
 
-    {/* Right Sidebar: Order Form & KPIs (4 cols on desktop) */}
-    <GridItem span={{ base: 12, lg: 4 }} className="min-w-0 space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Order Ticket</CardTitle>
-        </CardHeader>
-        <CardContent>{/* Buy/Sell form controls */}</CardContent>
-      </Card>
-    </GridItem>
-  </Grid>
-</Container>
+#### B. 3-Pane Trading Terminal (Orderbook + Chart + Execution Ticket)
+```tsx
+<div className="grid grid-cols-12 gap-4 w-full">
+  {/* Left: Order Book */}
+  <div className="col-span-12 md:col-span-6 xl:col-span-3 min-w-0">
+    <Card>
+      <CardHeader><CardTitle>Order Book</CardTitle></CardHeader>
+      <CardContent>{/* Order book table */}</CardContent>
+    </Card>
+  </div>
+
+  {/* Center: Candlestick Chart */}
+  <div className="col-span-12 md:col-span-12 xl:col-span-6 min-w-0">
+    <CandlestickChart symbol="BTC / USDT" height={400} />
+  </div>
+
+  {/* Right: Execution Ticket */}
+  <div className="col-span-12 md:col-span-6 xl:col-span-3 min-w-0">
+    <Card>
+      <CardHeader><CardTitle>Trade Execution</CardTitle></CardHeader>
+      <CardContent>{/* Buy/Sell forms */}</CardContent>
+    </Card>
+  </div>
+</div>
 ```
 
 ---

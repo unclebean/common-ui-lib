@@ -40,13 +40,23 @@ export function Grid({
   );
 }
 
+export interface ResponsiveSpan {
+  base?: number;
+  sm?: number;
+  md?: number;
+  lg?: number;
+  xl?: number;
+}
+
 export interface GridItemProps extends React.HTMLAttributes<HTMLDivElement> {
-  colSpan?: 1 | 2 | 3 | 4 | 5 | 6 | 12;
+  colSpan?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
+  span?: number | ResponsiveSpan;
   rowSpan?: 1 | 2 | 3 | 4;
 }
 
 export function GridItem({
   colSpan,
+  span,
   rowSpan,
   className,
   ...props
@@ -58,13 +68,31 @@ export function GridItem({
     4: "col-span-1 md:col-span-4",
     5: "col-span-1 md:col-span-5",
     6: "col-span-1 md:col-span-6",
+    7: "col-span-1 md:col-span-7",
+    8: "col-span-1 md:col-span-8",
+    9: "col-span-1 md:col-span-9",
+    10: "col-span-1 md:col-span-10",
+    11: "col-span-1 md:col-span-11",
     12: "col-span-1 md:col-span-12",
   };
+
+  const spanClasses: string[] = [];
+  const effectiveColSpan = colSpan ?? (typeof span === "number" ? span : undefined);
+
+  if (effectiveColSpan && colSpanMap[effectiveColSpan]) {
+    spanClasses.push(colSpanMap[effectiveColSpan]);
+  } else if (typeof span === "object" && span !== null) {
+    if (span.base) spanClasses.push(`col-span-${span.base}`);
+    if (span.sm) spanClasses.push(`sm:col-span-${span.sm}`);
+    if (span.md) spanClasses.push(`md:col-span-${span.md}`);
+    if (span.lg) spanClasses.push(`lg:col-span-${span.lg}`);
+    if (span.xl) spanClasses.push(`xl:col-span-${span.xl}`);
+  }
 
   return (
     <div
       className={cn(
-        colSpan && colSpanMap[colSpan],
+        spanClasses.join(" "),
         rowSpan && `row-span-${rowSpan}`,
         className
       )}

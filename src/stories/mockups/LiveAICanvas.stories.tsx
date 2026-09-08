@@ -258,12 +258,39 @@ function createModuleResolver() {
   };
 }
 
+function sanitizeResponsiveGridClasses(raw: string): string {
+  let res = raw;
+  // 1. In 12-col layouts, convert col-span-1 base to col-span-12 so mobile/tablet stacks full width instead of 8.33%
+  res = res.replace(/\bcol-span-1\s+((?:sm|md|lg|xl):col-span-)/g, "col-span-12 $1");
+
+  // 2. Promote lg:grid-cols-12 to md:grid-cols-12 so multi-column layouts trigger in Storybook canvas (800-1000px)
+  res = res.replace(/\blg:grid-cols-12\b/g, "md:grid-cols-12");
+
+  // 3. Promote standalone lg:col-span-* to md:col-span-* when md: is missing
+  res = res.replace(/\bcol-span-12\s+lg:col-span-8\b/g, "col-span-12 md:col-span-8");
+  res = res.replace(/\bcol-span-12\s+lg:col-span-4\b/g, "col-span-12 md:col-span-4");
+  res = res.replace(/\bcol-span-12\s+lg:col-span-7\b/g, "col-span-12 md:col-span-7");
+  res = res.replace(/\bcol-span-12\s+lg:col-span-5\b/g, "col-span-12 md:col-span-5");
+  res = res.replace(/\bcol-span-12\s+lg:col-span-6\b/g, "col-span-12 md:col-span-12 xl:col-span-6");
+  res = res.replace(/\bcol-span-12\s+lg:col-span-3\b/g, "col-span-12 md:col-span-6 xl:col-span-3");
+
+  // Also catch any remaining raw lg:col-span-8 / lg:col-span-4 without md:
+  res = res.replace(/(?<!md:col-span-\d+\s+)\blg:col-span-8\b/g, "md:col-span-8");
+  res = res.replace(/(?<!md:col-span-\d+\s+)\blg:col-span-4\b/g, "md:col-span-4");
+  res = res.replace(/(?<!md:col-span-\d+\s+)\blg:col-span-7\b/g, "md:col-span-7");
+  res = res.replace(/(?<!md:col-span-\d+\s+)\blg:col-span-5\b/g, "md:col-span-5");
+
+  return res;
+}
+
 function compileMockup(code: string): React.ComponentType | null {
   try {
     // Strip import.meta statements as new Function executes in a non-module context
-    const cleanCode = code
+    let cleanCode = code
       .replace(/if\s*\(\s*import\.meta(?:\.[A-Za-z0-9_$]+)*\s*\)\s*\{[\s\S]*?\}/g, "")
       .replace(/import\.meta(?:\.[A-Za-z0-9_$]+)*/g, "undefined");
+
+    cleanCode = sanitizeResponsiveGridClasses(cleanCode);
 
     const compiled = transform(cleanCode, {
       transforms: ["jsx", "typescript", "imports"],

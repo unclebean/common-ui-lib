@@ -55,13 +55,29 @@ export function sanitizeMockupCode(rawCode: string): string {
   code = code.replace(/<AssetHoldingsTable(?!\s+data=)[^>]*\/>/g, "<AssetHoldingsTable data={sampleHoldings} />");
   code = code.replace(/<AssetHoldingsTable\s+(?:holdings|items|assets)=/g, "<AssetHoldingsTable data=");
 
-  // 5. Fix Stack and Grid subcomponents
+  // 5. Fix Stack and Grid subcomponents & Responsive Breakpoints
   code = code.replace(/<Grid\.Row[^>]*>/g, '<div className="grid grid-cols-1 md:grid-cols-2 gap-6">').replace(/<\/Grid\.Row>/g, "</div>");
   code = code.replace(/<Grid\.Col[^>]*>/g, "<div>").replace(/<\/Grid\.Col>/g, "</div>");
   code = code.replace(/<Stack\.Item[^>]*>/g, "<div>").replace(/<\/Stack\.Item>/g, "</div>");
   code = code.replace(/templateColumns="[^"]*"/g, "");
   code = code.replace(/gap=\{([0-9]+)\}/g, 'gap="lg"');
   code = code.replace(/gap="([0-9]+)"/g, 'gap="lg"');
+
+  // Fix grid responsive classes for 12-column layouts
+  code = code.replace(/\bcol-span-1\s+((?:sm|md|lg|xl):col-span-)/g, "col-span-12 $1");
+  code = code.replace(/\blg:grid-cols-12\b/g, "md:grid-cols-12");
+  code = code.replace(/\bcol-span-12\s+lg:col-span-8\b/g, "col-span-12 md:col-span-8");
+  code = code.replace(/\bcol-span-12\s+lg:col-span-4\b/g, "col-span-12 md:col-span-4");
+  code = code.replace(/\bcol-span-12\s+lg:col-span-7\b/g, "col-span-12 md:col-span-7");
+  code = code.replace(/\bcol-span-12\s+lg:col-span-5\b/g, "col-span-12 md:col-span-5");
+  code = code.replace(/\bcol-span-12\s+lg:col-span-6\b/g, "col-span-12 md:col-span-12 xl:col-span-6");
+  code = code.replace(/\bcol-span-12\s+lg:col-span-3\b/g, "col-span-12 md:col-span-6 xl:col-span-3");
+  code = code.replace(/(?<!md:col-span-\d+\s+)\blg:col-span-8\b/g, "md:col-span-8");
+  code = code.replace(/(?<!md:col-span-\d+\s+)\blg:col-span-4\b/g, "md:col-span-4");
+
+  // Unwrap accidentally double-nested charts inside Cards
+  code = code.replace(/<Card>\s*<CardContent>\s*(<(?:CandlestickChart|PortfolioPerformanceChart)[^>]*\/>)\s*<\/CardContent>\s*<\/Card>/g, "$1");
+  code = code.replace(/<Card>\s*(<(?:CandlestickChart|PortfolioPerformanceChart)[^>]*\/>)\s*<\/Card>/g, "$1");
 
   // 6. Fix Avatar self-closing tag or missing fallback
   code = code.replace(/<Avatar\s+src="([^"]*)"\s+alt="([^"]*)"\s*\/>/g, '<Avatar><AvatarFallback>$2</AvatarFallback></Avatar>');
