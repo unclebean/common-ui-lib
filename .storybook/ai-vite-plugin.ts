@@ -316,6 +316,9 @@ export function aiMockupVitePlugin(): Plugin {
             const ollamaBaseUrl =
               process.env.OLLAMA_BASE_URL || "http://127.0.0.1:11434";
 
+            const financeDir = path.resolve(process.cwd(), "src/finance");
+            const financeFiles = fs.existsSync(financeDir) ? fs.readdirSync(financeDir) : [];
+
             res.writeHead(200, { "Content-Type": "application/json" });
             res.end(
               JSON.stringify({
@@ -325,6 +328,7 @@ export function aiMockupVitePlugin(): Plugin {
                 geminiModel: defaultGeminiModel,
                 ollamaModel: defaultOllamaModel,
                 ollamaUrl: ollamaBaseUrl,
+                financeFiles,
                 designSpec,
               })
             );
