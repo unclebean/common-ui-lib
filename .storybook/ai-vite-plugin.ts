@@ -43,10 +43,13 @@ export function sanitizeMockupCode(rawCode: string): string {
   code = code.replace(/import\s+PageHeader\s+from\s*["']@\/components\/layout\/page-header["'];?/g, 'import { PageHeader } from "@/components/layout/page-header";');
   code = code.replace(/import\s+PortfolioChart\s+from\s*["']@\/finance\/portfolio-chart["'];?/g, 'import { PortfolioPerformanceChart } from "@/finance/portfolio-chart";');
   code = code.replace(/import\s+AssetTable\s+from\s*["']@\/finance\/asset-table["'];?/g, 'import { AssetHoldingsTable, sampleHoldings } from "@/finance/asset-table";');
+  code = code.replace(/import\s+CandlestickChart\s+from\s*["']@\/finance\/candlestick-chart["'];?/g, 'import { CandlestickChart, sampleCandleData } from "@/finance/candlestick-chart";');
 
   // Replace invalid component names
   code = code.replace(/\bPortfolioChart\b/g, "PortfolioPerformanceChart");
   code = code.replace(/\bAssetTable\b/g, "AssetHoldingsTable");
+  code = code.replace(/\bCandleChart\b/g, "CandlestickChart");
+  code = code.replace(/\bTradingViewChart\b/g, "CandlestickChart");
 
   // Fix AssetHoldingsTable props
   code = code.replace(/<AssetHoldingsTable(?!\s+data=)[^>]*\/>/g, "<AssetHoldingsTable data={sampleHoldings} />");
@@ -145,7 +148,7 @@ export function sanitizeMockupCode(rawCode: string): string {
     "Select", "Switch", "Slider", "Progress", "Tabs", "Dialog", "Popover",
     "Tooltip", "Accordion", "Alert", "ScrollArea", "Grid", "GridItem",
     "Stack", "VStack", "HStack", "PageHeader", "PortfolioPerformanceChart",
-    "AssetHoldingsTable", "Container"
+    "AssetHoldingsTable", "CandlestickChart", "Container"
   ]);
 
   // Collect all imported symbols from non-lucide imports to prevent duplicate identifiers

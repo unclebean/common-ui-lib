@@ -68,6 +68,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Container } from "@/components/layout/container";
 import { PortfolioPerformanceChart } from "@/finance/portfolio-chart";
 import { AssetHoldingsTable, sampleHoldings } from "@/finance/asset-table";
+import { CandlestickChart, sampleCandleData } from "@/finance/candlestick-chart";
 
 function createModuleResolver() {
   const iconProxy = new Proxy(LucideIcons, {
@@ -207,6 +208,19 @@ function createModuleResolver() {
         AssetHoldingsTable,
         sampleHoldings,
         default: AssetHoldingsTable,
+        __esModule: true,
+      };
+    }
+    if (
+      clean.includes("candlestick") ||
+      clean.includes("candle") ||
+      clean.includes("tradingview") ||
+      clean.includes("trading-chart")
+    ) {
+      return {
+        CandlestickChart,
+        sampleCandleData,
+        default: CandlestickChart,
         __esModule: true,
       };
     }

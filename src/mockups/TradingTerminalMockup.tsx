@@ -14,6 +14,7 @@ import {
   AssetAllocationDonutChart,
 } from "@/finance/portfolio-chart";
 import { AssetHoldingsTable, sampleHoldings } from "@/finance/asset-table";
+import { CandlestickChart } from "@/finance/candlestick-chart";
 import { TrendingUp, ArrowUpRight, ShieldCheck, Zap } from "lucide-react";
 
 export default function TradingTerminalMockup() {
@@ -92,14 +93,7 @@ export default function TradingTerminalMockup() {
       <Grid cols={3} gap="lg">
         {/* Charts & Holdings (2 Cols) */}
         <GridItem colSpan={2} className="space-y-6">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-semibold">Net Asset Value (NAV) Performance</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <PortfolioPerformanceChart />
-            </CardContent>
-          </Card>
+          <CandlestickChart symbol="BTC / USDT" interval="15m" height={360} />
 
           <Card>
             <CardHeader className="pb-2">

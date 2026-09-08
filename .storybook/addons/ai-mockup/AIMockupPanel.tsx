@@ -164,6 +164,7 @@ CRITICAL IMPORT RULES:
   import { Stack, VStack, HStack } from "@/components/layout/stack";
   import { PortfolioPerformanceChart } from "@/finance/portfolio-chart";
   import { AssetHoldingsTable, sampleHoldings } from "@/finance/asset-table";
+  import { CandlestickChart, sampleCandleData } from "@/finance/candlestick-chart";
 
 MANDATORY RESPONSIVE WEB DESIGN RULES (CRITICAL):
 1. Canvas Viewport & Breakpoint Strategy:
@@ -182,16 +183,16 @@ MANDATORY RESPONSIVE WEB DESIGN RULES (CRITICAL):
      If you use 3 columns, YOU MUST GENERATE ALL THREE PANES so they sum to 12 (3 + 6 + 3 = 12):
      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 w-full">
        <div className="col-span-1 md:col-span-6 lg:col-span-3 min-w-0">...Orderbook...</div>
-       <div className="col-span-1 md:col-span-12 lg:col-span-6 min-w-0">...Main Chart...</div>
+       <div className="col-span-1 md:col-span-12 lg:col-span-6 min-w-0">...CandlestickChart...</div>
        <div className="col-span-1 md:col-span-6 lg:col-span-3 min-w-0">...Order Execution...</div>
      </div>
    - KPI / Stat Cards (4 cards):
      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 w-full">
 
 3. NEVER Nest a <Card> Inside Another <Card>:
-   - "<PortfolioPerformanceChart />" and "<AssetHoldingsTable />" are ALREADY complete, self-contained <Card> components with their own borders, header, and padding.
-   - NEVER wrap <PortfolioPerformanceChart /> inside another <Card> or <CardContent>! That creates double padding and double borders, squashing the chart into an unreadable sliver.
-   - Directly render: <PortfolioPerformanceChart className="w-full" />
+   - "<PortfolioPerformanceChart />", "<CandlestickChart />", and "<AssetHoldingsTable />" are ALREADY complete, self-contained <Card> components with their own borders, header, and padding.
+   - NEVER wrap <PortfolioPerformanceChart /> or <CandlestickChart /> inside another <Card> or <CardContent>! That creates double padding and double borders, squashing the chart into an unreadable sliver.
+   - Directly render: <CandlestickChart symbol="BTC / USDT" interval="15m" height={380} className="w-full" />
 
 4. Orderbook & Table Density:
    - In compact orderbooks, use tight typography: <table className="w-full text-[11px] font-mono">
@@ -214,6 +215,8 @@ MANDATORY RESPONSIVE WEB DESIGN RULES (CRITICAL):
    - On mobile/compact views, hide non-essential columns with "hidden sm:table-cell".
 
 8. Component Guidelines:
+   - Candlestick Chart (TradingView): For crypto, stock, forex, and trading terminals, ALWAYS use <CandlestickChart symbol="BTC / USDT" interval="15m" height={380} className="w-full" />.
+   - Portfolio Chart: For net worth, wealth management, asset allocation, use <PortfolioPerformanceChart className="w-full" />.
    - Avatar: Always wrap in <Avatar><AvatarFallback>XYZ</AvatarFallback></Avatar>
    - AssetHoldingsTable: Always pass <AssetHoldingsTable data={sampleHoldings} />
    - Root export: Always export default function MockupPage() { ... }

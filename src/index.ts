@@ -35,6 +35,7 @@ export * from "./components/layout";
 // Finance Domain Primitives
 export * from "./finance/portfolio-chart";
 export * from "./finance/asset-table";
+export * from "./finance/candlestick-chart";
 
 // Utils & Tokens
 export * from "./lib/utils";
