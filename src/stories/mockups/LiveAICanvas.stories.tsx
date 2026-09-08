@@ -260,7 +260,12 @@ function createModuleResolver() {
 
 function compileMockup(code: string): React.ComponentType | null {
   try {
-    const compiled = transform(code, {
+    // Strip import.meta statements as new Function executes in a non-module context
+    const cleanCode = code
+      .replace(/if\s*\(\s*import\.meta(?:\.[A-Za-z0-9_$]+)*\s*\)\s*\{[\s\S]*?\}/g, "")
+      .replace(/import\.meta(?:\.[A-Za-z0-9_$]+)*/g, "undefined");
+
+    const compiled = transform(cleanCode, {
       transforms: ["jsx", "typescript", "imports"],
       jsxRuntime: "classic",
     }).code;
