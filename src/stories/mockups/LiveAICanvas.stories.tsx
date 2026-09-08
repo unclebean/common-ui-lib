@@ -68,7 +68,17 @@ import { PageHeader } from "@/components/layout/page-header";
 import { Container } from "@/components/layout/container";
 import { PortfolioPerformanceChart } from "@/finance/portfolio-chart";
 import { AssetHoldingsTable, sampleHoldings } from "@/finance/asset-table";
-import { CandlestickChart, sampleCandleData } from "@/finance/candlestick-chart";
+
+let CandlestickChartComp: any = null;
+let sampleCandles: any = [];
+import("@/finance/candlestick-chart")
+  .then((m) => {
+    CandlestickChartComp = m.CandlestickChart;
+    sampleCandles = m.sampleCandleData;
+  })
+  .catch((e) => {
+    console.warn("CandlestickChart dynamic load deferred:", e);
+  });
 
 function createModuleResolver() {
   const iconProxy = new Proxy(LucideIcons, {
@@ -217,10 +227,20 @@ function createModuleResolver() {
       clean.includes("tradingview") ||
       clean.includes("trading-chart")
     ) {
+      const FallbackCandle = (props: any) => {
+        if (CandlestickChartComp) {
+          return React.createElement(CandlestickChartComp, props);
+        }
+        return (
+          <div className="p-6 text-center border border-dashed rounded-lg text-muted-foreground text-xs">
+            Candlestick chart is loading or initializing...
+          </div>
+        );
+      };
       return {
-        CandlestickChart,
-        sampleCandleData,
-        default: CandlestickChart,
+        CandlestickChart: CandlestickChartComp || FallbackCandle,
+        sampleCandleData: sampleCandles,
+        default: CandlestickChartComp || FallbackCandle,
         __esModule: true,
       };
     }

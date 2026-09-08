@@ -316,20 +316,6 @@ export function aiMockupVitePlugin(): Plugin {
             const ollamaBaseUrl =
               process.env.OLLAMA_BASE_URL || "http://127.0.0.1:11434";
 
-            const financeDir = path.resolve(process.cwd(), "src/finance");
-            const financeFiles = fs.existsSync(financeDir) ? fs.readdirSync(financeDir) : [];
-            const candlePath = path.resolve(process.cwd(), "src/finance/candlestick-chart.tsx");
-            const candleStat = fs.existsSync(candlePath) ? fs.statSync(candlePath) : null;
-            let transformError = null;
-            try {
-              const resTrans = await server.transformRequest("/src/finance/candlestick-chart.tsx");
-              if (!resTrans) {
-                transformError = "transformRequest returned null";
-              }
-            } catch (e: any) {
-              transformError = e.stack || e.message || String(e);
-            }
-
             res.writeHead(200, { "Content-Type": "application/json" });
             res.end(
               JSON.stringify({
@@ -339,9 +325,6 @@ export function aiMockupVitePlugin(): Plugin {
                 geminiModel: defaultGeminiModel,
                 ollamaModel: defaultOllamaModel,
                 ollamaUrl: ollamaBaseUrl,
-                financeFiles,
-                candleStat,
-                transformError,
                 designSpec,
               })
             );
