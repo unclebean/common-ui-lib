@@ -284,36 +284,7 @@ export function aiMockupVitePlugin(): Plugin {
       loadEnvFileSafely(".env");
       loadEnvFileSafely(".env.local");
 
-      // Intercept stale Vite pre-bundled dependency chunk requests from cached browser sessions
-      server.middlewares.use((req, res, next) => {
-        const url = req.url || "";
-        if (url.includes("/node_modules/.cache/") || url.includes("/sb-vite/deps/")) {
-          const cleanUrl = url.split("?")[0];
-          const localPath = path.resolve(process.cwd(), cleanUrl.replace(/^\//, ""));
-          if (!fs.existsSync(localPath)) {
-            res.writeHead(200, {
-              "Content-Type": "application/javascript; charset=utf-8",
-              "Cache-Control": "no-store, no-cache, must-revalidate",
-            });
-            res.end(`// Auto-recovery for stale Vite dependency chunk after npm install or re-bundle
-console.warn("[Vite Cache Handler] Stale chunk requested: ${cleanUrl}. Triggering clean reload...");
-if (typeof window !== "undefined") {
-  try {
-    sessionStorage.removeItem('@storybook/manager/store');
-    localStorage.removeItem('@storybook/manager/store');
-  } catch(e) {}
-  setTimeout(() => {
-    window.location.reload();
-  }, 100);
-}
-const _dummyProxy = new Proxy(() => null, { get: () => _dummyProxy });
-export default _dummyProxy;
-`);
-            return;
-          }
-        }
-        next();
-      });
+
 
       server.middlewares.use(async (req, res, next) => {
         const url = req.url || "";
