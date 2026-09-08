@@ -112,14 +112,13 @@ export const AIMockupPanel: React.FC<AIMockupPanelProps> = ({ active, api, chann
     });
 
     // Fix grid responsive classes
+    code = code.replace(/\b(?:col-span-12\s+)?md:col-span-6\s+xl:col-span-3\b/g, "col-span-12 lg:col-span-3");
+    code = code.replace(/\b(?:col-span-12\s+)?md:col-span-12\s+xl:col-span-6\b/g, "col-span-12 lg:col-span-6");
     code = code.replace(/\bcol-span-1\s+((?:sm|md|lg|xl):col-span-)/g, "col-span-12 $1");
-    code = code.replace(/\blg:grid-cols-12\b/g, "md:grid-cols-12");
     code = code.replace(/\bcol-span-12\s+lg:col-span-8\b/g, "col-span-12 md:col-span-8");
     code = code.replace(/\bcol-span-12\s+lg:col-span-4\b/g, "col-span-12 md:col-span-4");
     code = code.replace(/\bcol-span-12\s+lg:col-span-7\b/g, "col-span-12 md:col-span-7");
     code = code.replace(/\bcol-span-12\s+lg:col-span-5\b/g, "col-span-12 md:col-span-5");
-    code = code.replace(/\bcol-span-12\s+lg:col-span-6\b/g, "col-span-12 md:col-span-12 xl:col-span-6");
-    code = code.replace(/\bcol-span-12\s+lg:col-span-3\b/g, "col-span-12 md:col-span-6 xl:col-span-3");
     code = code.replace(/(?<!md:col-span-\d+\s+)\blg:col-span-8\b/g, "md:col-span-8");
     code = code.replace(/(?<!md:col-span-\d+\s+)\blg:col-span-4\b/g, "md:col-span-4");
 
@@ -179,27 +178,30 @@ CRITICAL IMPORT RULES:
   import { CandlestickChart, sampleCandleData } from "@/finance/candlestick-chart";
 
 MANDATORY RESPONSIVE WEB DESIGN RULES (CRITICAL):
-1. Canvas Viewport & Breakpoint Strategy:
-   - The Storybook Canvas is displayed alongside the 460px AI sidebar. On standard laptops, canvas width is ~800px-1000px.
-   - ALWAYS use "md:" (768px) as your primary desktop/tablet breakpoint, and "xl:" (1280px) for wide screens. Do NOT rely exclusively on "lg:" (1024px) for 2-column layouts because 900px canvas width will fail to trigger "lg:".
-
-2. Grid Col-Span MUST ALWAYS Sum to Exactly 12 (NO SQUASHED OR ORPHAN COLUMNS):
-   In Tailwind CSS 12-column grids, the base (mobile) class MUST BE "col-span-12" (100% width), NEVER "col-span-1" (which takes only 8.3% width and squashes items into unreadable slivers)!
+1. Grid Col-Span MUST ALWAYS Sum to Exactly 12 (NO SQUASHED OR ORPHAN COLUMNS):
+   In Tailwind CSS, child columns in every row must sum to exactly 12 across the row.
    - 2-Pane Layout (e.g. Orderbook/Sidebar + Chart/Main Content):
-     MUST use 4 + 8 = 12 (or 5 + 7 = 12). DO NOT use 3 + 6, which leaves 3 columns blank!
-     <div className="grid grid-cols-12 gap-4 w-full">
-       <div className="col-span-12 md:col-span-4 min-w-0">...Left Pane (Orderbook/Sidebar)...</div>
-       <div className="col-span-12 md:col-span-8 min-w-0">...Right Pane (Chart/Main)...</div>
+     Use 4 + 8 = 12 (or 5 + 7 = 12). At md: (768px+), they sit side-by-side cleanly:
+     <div className="grid grid-cols-1 md:grid-cols-12 gap-4 w-full">
+       <div className="col-span-1 md:col-span-4 min-w-0">...Left Pane (Orderbook/Sidebar)...</div>
+       <div className="col-span-1 md:col-span-8 min-w-0">...Right Pane (Chart/Main)...</div>
      </div>
    - 3-Pane Trading Terminal (Orderbook + Chart + Order Execution):
-     On medium screens (Storybook canvas), chart is full width (12) and orderbook/ticket are half width (6 + 6). On xl screens, they align side-by-side (3 + 6 + 3 = 12):
+     On desktop (lg: 1024px+), all three panes sit side-by-side (3 + 6 + 3 = 12).
+     On mobile/tablet (<1024px), each card stacks full-width (col-span-1) with zero blank space:
+     <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 w-full">
+       <div className="col-span-1 lg:col-span-3 min-w-0">...Orderbook...</div>
+       <div className="col-span-1 lg:col-span-6 min-w-0">...CandlestickChart...</div>
+       <div className="col-span-1 lg:col-span-3 min-w-0">...Order Execution...</div>
+     </div>
+     Or with explicit 12-col base:
      <div className="grid grid-cols-12 gap-4 w-full">
-       <div className="col-span-12 md:col-span-6 xl:col-span-3 min-w-0">...Orderbook...</div>
-       <div className="col-span-12 md:col-span-12 xl:col-span-6 min-w-0">...CandlestickChart...</div>
-       <div className="col-span-12 md:col-span-6 xl:col-span-3 min-w-0">...Order Execution...</div>
+       <div className="col-span-12 lg:col-span-3 min-w-0">...Orderbook...</div>
+       <div className="col-span-12 lg:col-span-6 min-w-0">...CandlestickChart...</div>
+       <div className="col-span-12 lg:col-span-3 min-w-0">...Order Execution...</div>
      </div>
    - KPI / Stat Cards (4 cards):
-     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 w-full">
+     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 w-full">
 
 3. NEVER Nest a <Card> Inside Another <Card>:
    - "<PortfolioPerformanceChart />", "<CandlestickChart />", and "<AssetHoldingsTable />" are ALREADY complete, self-contained <Card> components with their own borders, header, and padding.

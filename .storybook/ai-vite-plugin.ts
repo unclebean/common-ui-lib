@@ -64,14 +64,13 @@ export function sanitizeMockupCode(rawCode: string): string {
   code = code.replace(/gap="([0-9]+)"/g, 'gap="lg"');
 
   // Fix grid responsive classes for 12-column layouts
+  code = code.replace(/\b(?:col-span-12\s+)?md:col-span-6\s+xl:col-span-3\b/g, "col-span-12 lg:col-span-3");
+  code = code.replace(/\b(?:col-span-12\s+)?md:col-span-12\s+xl:col-span-6\b/g, "col-span-12 lg:col-span-6");
   code = code.replace(/\bcol-span-1\s+((?:sm|md|lg|xl):col-span-)/g, "col-span-12 $1");
-  code = code.replace(/\blg:grid-cols-12\b/g, "md:grid-cols-12");
   code = code.replace(/\bcol-span-12\s+lg:col-span-8\b/g, "col-span-12 md:col-span-8");
   code = code.replace(/\bcol-span-12\s+lg:col-span-4\b/g, "col-span-12 md:col-span-4");
   code = code.replace(/\bcol-span-12\s+lg:col-span-7\b/g, "col-span-12 md:col-span-7");
   code = code.replace(/\bcol-span-12\s+lg:col-span-5\b/g, "col-span-12 md:col-span-5");
-  code = code.replace(/\bcol-span-12\s+lg:col-span-6\b/g, "col-span-12 md:col-span-12 xl:col-span-6");
-  code = code.replace(/\bcol-span-12\s+lg:col-span-3\b/g, "col-span-12 md:col-span-6 xl:col-span-3");
   code = code.replace(/(?<!md:col-span-\d+\s+)\blg:col-span-8\b/g, "md:col-span-8");
   code = code.replace(/(?<!md:col-span-\d+\s+)\blg:col-span-4\b/g, "md:col-span-4");
 

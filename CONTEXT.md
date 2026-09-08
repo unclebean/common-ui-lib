@@ -114,22 +114,22 @@ import { DashboardShell, SidebarNav } from "@/components/layout/dashboard-shell"
 
 #### B. 3-Pane Trading Terminal (Orderbook + Chart + Execution Ticket)
 ```tsx
-<div className="grid grid-cols-12 gap-4 w-full">
-  {/* Left: Order Book */}
-  <div className="col-span-12 md:col-span-6 xl:col-span-3 min-w-0">
+<div className="grid grid-cols-1 lg:grid-cols-12 gap-4 w-full">
+  {/* Left: Order Book (3 cols on desktop, full width on mobile/tablet) */}
+  <div className="col-span-1 lg:col-span-3 min-w-0">
     <Card>
       <CardHeader><CardTitle>Order Book</CardTitle></CardHeader>
       <CardContent>{/* Order book table */}</CardContent>
     </Card>
   </div>
 
-  {/* Center: Candlestick Chart */}
-  <div className="col-span-12 md:col-span-12 xl:col-span-6 min-w-0">
+  {/* Center: Candlestick Chart (6 cols on desktop, full width on mobile/tablet) */}
+  <div className="col-span-1 lg:col-span-6 min-w-0">
     <CandlestickChart symbol="BTC / USDT" height={400} />
   </div>
 
-  {/* Right: Execution Ticket */}
-  <div className="col-span-12 md:col-span-6 xl:col-span-3 min-w-0">
+  {/* Right: Execution Ticket (3 cols on desktop, full width on mobile/tablet) */}
+  <div className="col-span-1 lg:col-span-3 min-w-0">
     <Card>
       <CardHeader><CardTitle>Trade Execution</CardTitle></CardHeader>
       <CardContent>{/* Buy/Sell forms */}</CardContent>
@@ -137,6 +137,8 @@ import { DashboardShell, SidebarNav } from "@/components/layout/dashboard-shell"
   </div>
 </div>
 ```
+> On desktop (`lg:` 1024px+), all three panes sit side-by-side (3 + 6 + 3 = 12).
+> On mobile/tablet (< 1024px), each pane cleanly stacks full width with zero empty space.
 
 ---
 
