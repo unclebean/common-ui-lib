@@ -2,9 +2,8 @@ import type { Meta, StoryObj } from "@storybook/react";
 import * as React from "react";
 import { CandlestickChart, sampleCandleData } from "./candlestick-chart";
 
-const meta: Meta<typeof CandlestickChart> = {
+const meta: Meta = {
   title: "07. Finance Modules/Candlestick Chart (TradingView)",
-  component: CandlestickChart,
   parameters: {
     layout: "padded",
   },

@@ -2,9 +2,8 @@ import type { Meta, StoryObj } from "@storybook/react";
 import * as React from "react";
 import { AssetHoldingsTable, sampleHoldings } from "./asset-table";
 
-const meta: Meta<typeof AssetHoldingsTable> = {
+const meta: Meta = {
   title: "07. Finance Modules/Asset Holdings Table",
-  component: AssetHoldingsTable,
 };
 
 export default meta;

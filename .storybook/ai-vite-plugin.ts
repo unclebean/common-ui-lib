@@ -480,7 +480,6 @@ import ${cleanName} from "@/mockups/${cleanName}";
 
 const meta: Meta = {
   title: "01. AI Mockups/${storyTitle}",
-  component: ${cleanName},
   parameters: {
     layout: "fullscreen",
   },

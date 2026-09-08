@@ -4,7 +4,6 @@ import TradingTerminalMockup from "@/mockups/TradingTerminalMockup";
 
 const meta: Meta = {
   title: "01. AI Mockups/Trading Terminal",
-  component: TradingTerminalMockup,
   parameters: {
     layout: "fullscreen",
   },
