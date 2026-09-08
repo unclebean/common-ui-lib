@@ -1,10 +1,5 @@
 import * as React from "react";
-import {
-  createChart,
-  CandlestickSeries,
-  HistogramSeries,
-  ColorType,
-  CrosshairMode,
+import type {
   IChartApi,
   ISeriesApi,
   Time,
@@ -13,7 +8,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { RotateCcw, TrendingUp, TrendingDown } from "lucide-react";
+import { RotateCcw, TrendingUp, TrendingDown, AlertCircle } from "lucide-react";
 
 export interface CandleData {
   time: string; // YYYY-MM-DD or Unix timestamp
@@ -94,6 +89,7 @@ export function CandlestickChart({
   const [activeInterval, setActiveInterval] = React.useState(interval);
   const [hoveredCandle, setHoveredCandle] = React.useState<CandleData | null>(null);
   const [isDark, setIsDark] = React.useState(false);
+  const [loadError, setLoadError] = React.useState<string | null>(null);
 
   // Latest stats
   const latestCandle = data[data.length - 1];
@@ -125,137 +121,166 @@ export function CandlestickChart({
 
   // Initialize and update Lightweight Chart
   React.useEffect(() => {
-    if (!containerRef.current) return;
+    let isCancelled = false;
 
-    // Clean up previous chart instance
-    if (chartRef.current) {
-      chartRef.current.remove();
-      chartRef.current = null;
-    }
+    async function initChart() {
+      if (!containerRef.current) return;
 
-    const themeColors = isDark
-      ? {
-          bg: "transparent",
-          text: "#94a3b8",
-          grid: "rgba(255, 255, 255, 0.05)",
-          border: "rgba(255, 255, 255, 0.1)",
-          crosshair: "rgba(148, 163, 184, 0.5)",
+      let lwCharts: any;
+      try {
+        lwCharts = await import("lightweight-charts");
+      } catch (err: any) {
+        if (!isCancelled) {
+          setLoadError(
+            "TradingView Lightweight Charts package is not installed or loading on server. Please run 'npm install' on server."
+          );
         }
-      : {
-          bg: "transparent",
-          text: "#64748b",
-          grid: "rgba(0, 0, 0, 0.05)",
-          border: "rgba(0, 0, 0, 0.1)",
-          crosshair: "rgba(100, 116, 139, 0.5)",
-        };
-
-    const chart = createChart(containerRef.current, {
-      width: containerRef.current.clientWidth || 600,
-      height: height,
-      layout: {
-        background: { type: ColorType.Solid, color: themeColors.bg },
-        textColor: themeColors.text,
-        fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-        fontSize: 11,
-      },
-      grid: {
-        vertLines: { color: themeColors.grid },
-        horzLines: { color: themeColors.grid },
-      },
-      crosshair: {
-        mode: CrosshairMode.Normal,
-        vertLine: {
-          color: themeColors.crosshair,
-          width: 1,
-          style: 3, // dashed
-          labelBackgroundColor: isDark ? "#1e293b" : "#e2e8f0",
-        },
-        horzLine: {
-          color: themeColors.crosshair,
-          width: 1,
-          style: 3,
-          labelBackgroundColor: isDark ? "#1e293b" : "#e2e8f0",
-        },
-      },
-      rightPriceScale: {
-        borderColor: themeColors.border,
-        scaleMargins: {
-          top: 0.1,
-          bottom: showVolume ? 0.22 : 0.1,
-        },
-      },
-      timeScale: {
-        borderColor: themeColors.border,
-        timeVisible: true,
-        secondsVisible: false,
-      },
-    });
-
-    chartRef.current = chart;
-
-    // Add Candlestick Series
-    const candleSeries = chart.addSeries(CandlestickSeries, {
-      upColor: bullishColor,
-      downColor: bearishColor,
-      borderVisible: false,
-      wickUpColor: bullishColor,
-      wickDownColor: bearishColor,
-    });
-    candleSeries.setData(data as any);
-    candleSeriesRef.current = candleSeries;
-
-    // Add Volume Histogram Series if enabled
-    if (showVolume) {
-      const volumeSeries = chart.addSeries(HistogramSeries, {
-        color: "#64748b",
-        priceFormat: {
-          type: "volume",
-        },
-        priceScaleId: "", // Overlay on chart
-      });
-
-      volumeSeries.priceScale().applyOptions({
-        scaleMargins: {
-          top: 0.82,
-          bottom: 0,
-        },
-      });
-
-      const volumeData = data.map((d) => ({
-        time: d.time as unknown as Time,
-        value: d.volume || (d.high - d.low) * 100,
-        color:
-          d.close >= d.open
-            ? "rgba(16, 185, 129, 0.4)" // Soft bullish green
-            : "rgba(239, 68, 68, 0.4)", // Soft bearish red
-      }));
-
-      volumeSeries.setData(volumeData);
-      volumeSeriesRef.current = volumeSeries;
-    }
-
-    // Crosshair hover listener for OHLC legend
-    chart.subscribeCrosshairMove((param) => {
-      if (!param.time || !param.seriesData) {
-        setHoveredCandle(null);
         return;
       }
-      const dataPoint = param.seriesData.get(candleSeries) as any;
-      if (dataPoint) {
-        setHoveredCandle({
-          time: String(param.time),
-          open: dataPoint.open,
-          high: dataPoint.high,
-          low: dataPoint.low,
-          close: dataPoint.close,
-        });
-      } else {
-        setHoveredCandle(null);
-      }
-    });
 
-    // Auto fit content
-    chart.timeScale().fitContent();
+      if (isCancelled || !containerRef.current) return;
+
+      const {
+        createChart,
+        CandlestickSeries,
+        HistogramSeries,
+        ColorType,
+        CrosshairMode,
+      } = lwCharts;
+
+      // Clean up previous chart instance
+      if (chartRef.current) {
+        chartRef.current.remove();
+        chartRef.current = null;
+      }
+
+      const themeColors = isDark
+        ? {
+            bg: "transparent",
+            text: "#94a3b8",
+            grid: "rgba(255, 255, 255, 0.05)",
+            border: "rgba(255, 255, 255, 0.1)",
+            crosshair: "rgba(148, 163, 184, 0.5)",
+          }
+        : {
+            bg: "transparent",
+            text: "#64748b",
+            grid: "rgba(0, 0, 0, 0.05)",
+            border: "rgba(0, 0, 0, 0.1)",
+            crosshair: "rgba(100, 116, 139, 0.5)",
+          };
+
+      const chart = createChart(containerRef.current, {
+        width: containerRef.current.clientWidth || 600,
+        height: height,
+        layout: {
+          background: { type: ColorType.Solid, color: themeColors.bg },
+          textColor: themeColors.text,
+          fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+          fontSize: 11,
+        },
+        grid: {
+          vertLines: { color: themeColors.grid },
+          horzLines: { color: themeColors.grid },
+        },
+        crosshair: {
+          mode: CrosshairMode.Normal,
+          vertLine: {
+            color: themeColors.crosshair,
+            width: 1,
+            style: 3, // dashed
+            labelBackgroundColor: isDark ? "#1e293b" : "#e2e8f0",
+          },
+          horzLine: {
+            color: themeColors.crosshair,
+            width: 1,
+            style: 3,
+            labelBackgroundColor: isDark ? "#1e293b" : "#e2e8f0",
+          },
+        },
+        rightPriceScale: {
+          borderColor: themeColors.border,
+          scaleMargins: {
+            top: 0.1,
+            bottom: showVolume ? 0.22 : 0.1,
+          },
+        },
+        timeScale: {
+          borderColor: themeColors.border,
+          timeVisible: true,
+          secondsVisible: false,
+        },
+      });
+
+      chartRef.current = chart;
+
+      // Add Candlestick Series
+      const candleSeries = chart.addSeries(CandlestickSeries, {
+        upColor: bullishColor,
+        downColor: bearishColor,
+        borderVisible: false,
+        wickUpColor: bullishColor,
+        wickDownColor: bearishColor,
+      });
+      candleSeries.setData(data as any);
+      candleSeriesRef.current = candleSeries;
+
+      // Add Volume Histogram Series if enabled
+      if (showVolume) {
+        const volumeSeries = chart.addSeries(HistogramSeries, {
+          color: "#64748b",
+          priceFormat: {
+            type: "volume",
+          },
+          priceScaleId: "", // Overlay on chart
+        });
+
+        volumeSeries.priceScale().applyOptions({
+          scaleMargins: {
+            top: 0.82,
+            bottom: 0,
+          },
+        });
+
+        const volumeData = data.map((d) => ({
+          time: d.time as unknown as Time,
+          value: d.volume || (d.high - d.low) * 100,
+          color:
+            d.close >= d.open
+              ? "rgba(16, 185, 129, 0.4)" // Soft bullish green
+              : "rgba(239, 68, 68, 0.4)", // Soft bearish red
+        }));
+
+        volumeSeries.setData(volumeData);
+        volumeSeriesRef.current = volumeSeries;
+      }
+
+      // Crosshair hover listener for OHLC legend
+      chart.subscribeCrosshairMove((param: any) => {
+        if (!param.time || !param.seriesData) {
+          setHoveredCandle(null);
+          return;
+        }
+        const dataPoint = param.seriesData.get(candleSeries) as any;
+        if (dataPoint) {
+          setHoveredCandle({
+            time: String(param.time),
+            open: dataPoint.open,
+            high: dataPoint.high,
+            low: dataPoint.low,
+            close: dataPoint.close,
+          });
+        } else {
+          setHoveredCandle(null);
+        }
+      });
+
+      // Auto fit content
+      chart.timeScale().fitContent();
+      setLoadError(null);
+    }
+
+    initChart();
 
     // ResizeObserver for responsive width
     const resizeObserver = new ResizeObserver((entries) => {
@@ -266,9 +291,12 @@ export function CandlestickChart({
       }
     });
 
-    resizeObserver.observe(containerRef.current);
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current);
+    }
 
     return () => {
+      isCancelled = true;
       resizeObserver.disconnect();
       if (chartRef.current) {
         chartRef.current.remove();
@@ -405,7 +433,20 @@ export function CandlestickChart({
 
       {/* Chart Canvas Mount Point */}
       <CardContent className="p-0 flex-1 relative w-full min-w-0">
-        <div ref={containerRef} className="w-full min-w-0" style={{ height }} />
+        {loadError ? (
+          <div
+            className="w-full flex flex-col items-center justify-center p-6 text-center text-muted-foreground"
+            style={{ height }}
+          >
+            <AlertCircle className="h-8 w-8 text-amber-500 mb-2" />
+            <div className="font-semibold text-foreground text-sm mb-1">
+              TradingView Lightweight Charts
+            </div>
+            <p className="text-xs max-w-sm text-muted-foreground">{loadError}</p>
+          </div>
+        ) : (
+          <div ref={containerRef} className="w-full min-w-0" style={{ height }} />
+        )}
       </CardContent>
     </Card>
   );

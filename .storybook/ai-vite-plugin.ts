@@ -290,10 +290,14 @@ export function aiMockupVitePlugin(): Plugin {
         // Endpoint 1: GET /api/ai/context
         if (url.startsWith("/api/ai/context") && req.method === "GET") {
           try {
+            const contextPath = path.resolve(process.cwd(), "CONTEXT.md");
             const designPath = path.resolve(process.cwd(), "design.md");
-            const designSpec = fs.existsSync(designPath)
-              ? fs.readFileSync(designPath, "utf8")
-              : "";
+            let designSpec = "";
+            if (fs.existsSync(contextPath)) {
+              designSpec = fs.readFileSync(contextPath, "utf8");
+            } else if (fs.existsSync(designPath)) {
+              designSpec = fs.readFileSync(designPath, "utf8");
+            }
 
             const hasGeminiKey = Boolean(process.env.GEMINI_API_KEY);
             const defaultProvider =
