@@ -3,27 +3,38 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
+  "main": "./dist/index.umd.js",
+  "module": "./dist/index.es.js",
   "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "src/tokens/globals.css"
+  ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.es.js",
+      "require": "./dist/index.umd.js",
+      "default": "./dist/index.es.js"
     },
     "./tokens": {
       "types": "./dist/tokens/index.d.ts",
-      "import": "./dist/tokens/index.js"
+      "import": "./dist/tokens/index.js",
+      "require": "./dist/tokens/index.cjs",
+      "default": "./dist/tokens/index.js"
     },
     "./globals.css": "./src/tokens/globals.css",
     "./tailwind-preset": {
       "types": "./dist/tokens/tailwind-preset.d.ts",
-      "import": "./dist/tokens/tailwind-preset.js"
+      "import": "./dist/tokens/tailwind-preset.js",
+      "require": "./dist/tokens/tailwind-preset.cjs",
+      "default": "./dist/tokens/tailwind-preset.js"
     }
   },
   "scripts": {
+    "prepare": "npm run build",
     "dev": "vite",
-    "build": "tsc --noEmit && vite build && tsc -p tsconfig.build.json",
+    "build": "tsc --noEmit && vite build && tsc -p tsconfig.build.json && esbuild src/tokens/tailwind-preset.ts --outfile=dist/tokens/tailwind-preset.js --format=esm && esbuild src/tokens/tailwind-preset.ts --outfile=dist/tokens/tailwind-preset.cjs --format=cjs && esbuild src/tokens/index.ts --outfile=dist/tokens/index.js --format=esm && esbuild src/tokens/index.ts --outfile=dist/tokens/index.cjs --format=cjs",
     "preview": "vite preview",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
