@@ -70,7 +70,7 @@ export const AIMockupPanel: React.FC<AIMockupPanelProps> = ({ active, api, chann
 
   // Load design spec on mount
   React.useEffect(() => {
-    fetch("/api/ai/context")
+    fetch("/api/ai/context", { cache: "no-store" })
       .then((res) => res.json())
       .then((data) => {
         if (data.designSpec) {
@@ -249,6 +249,7 @@ First provide a brief, friendly 1-2 sentence explanation of the design choices m
       const res = await fetch("/api/ai/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        cache: "no-store",
         body: JSON.stringify({
           provider: "gemini",
           model,

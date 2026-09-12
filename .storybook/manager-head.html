@@ -50,7 +50,7 @@
   (function() {
     try {
       var vKey = 'sb_build_version';
-      var currentBuild = '20260908_v3';
+      var currentBuild = '20260909_v1';
       var storedBuild = localStorage.getItem(vKey);
       if (storedBuild !== currentBuild) {
         // Clean obsolete manager store and stale timestamps from previous deployments
@@ -60,6 +60,11 @@
         if (window.caches && window.caches.keys) {
           window.caches.keys().then(function(keys) {
             keys.forEach(function(k) { window.caches.delete(k); });
+          });
+        }
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistrations().then(function(registrations) {
+            registrations.forEach(function(r) { r.unregister(); });
           });
         }
         localStorage.setItem(vKey, currentBuild);

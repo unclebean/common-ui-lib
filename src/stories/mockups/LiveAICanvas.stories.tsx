@@ -62,48 +62,124 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableFooter,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableCaption,
+} from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuCheckboxItem,
+  DropdownMenuRadioItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
+  DropdownMenuGroup,
+  DropdownMenuPortal,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuRadioGroup,
+} from "@/components/ui/dropdown-menu";
+import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Textarea } from "@/components/ui/textarea";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent,
+} from "@/components/ui/chart";
 import { Grid, GridItem } from "@/components/layout/grid";
 import { Stack, VStack, HStack } from "@/components/layout/stack";
 import { PageHeader } from "@/components/layout/page-header";
 import { Container } from "@/components/layout/container";
-import { PortfolioPerformanceChart } from "@/finance/portfolio-chart";
+import {
+  PortfolioPerformanceChart,
+  AssetAllocationDonutChart,
+  portfolioHistoryData,
+  allocationData,
+} from "@/finance/portfolio-chart";
 import { AssetHoldingsTable, sampleHoldings } from "@/finance/asset-table";
+import { CandlestickChart, sampleCandleData } from "@/finance/candlestick-chart";
 
-let CandlestickChartComp: any = null;
-let sampleCandles: any = [];
-import("@/finance/candlestick-chart")
-  .then((m) => {
-    CandlestickChartComp = m.CandlestickChart;
-    sampleCandles = m.sampleCandleData;
-  })
-  .catch((e) => {
-    console.warn("CandlestickChart dynamic load deferred:", e);
+function createSafeModule(target: Record<string, any>, defaultComponent?: any) {
+  const fallback =
+    defaultComponent ||
+    target.default ||
+    Object.values(target).find((v) => typeof v === "function") ||
+    ((props: any) => React.createElement("div", props, props?.children));
+
+  return new Proxy(target, {
+    get: (t, prop: string | symbol) => {
+      if (prop === "__esModule") return true;
+      if (prop === "default") return fallback;
+      if (typeof prop === "string") {
+        if (prop in t && t[prop] !== undefined) {
+          return t[prop];
+        }
+        // Return a safe stub component instead of undefined so React never throws
+        // "Element type is invalid: expected a string or class/function but got: undefined"
+        const Stub = (props: any) => React.createElement("div", props, props?.children);
+        Stub.displayName = `SafeStub(${prop})`;
+        return Stub;
+      }
+      return (t as any)[prop];
+    },
   });
+}
 
 function createModuleResolver() {
+  const fallbackIcon = (props: any) =>
+    React.createElement("svg", {
+      width: 16,
+      height: 16,
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 2,
+      strokeLinecap: "round",
+      strokeLinejoin: "round",
+      ...props,
+    });
+
   const iconProxy = new Proxy(LucideIcons, {
-    get: (target: any, prop: string) => {
-      if (prop in target) return target[prop];
+    get: (target: any, prop: string | symbol) => {
       if (prop === "__esModule") return true;
-      const singular = prop.replace(/s([A-Z])/, "$1");
-      if (singular in target) return target[singular];
-      return target.Sparkles || (() => null);
+      if (prop === "default") return target;
+      if (typeof prop === "string") {
+        if (prop in target && target[prop]) return target[prop];
+        const singular = prop.replace(/s([A-Z])/, "$1");
+        if (singular in target && target[singular]) return target[singular];
+        return target.Sparkles || fallbackIcon;
+      }
+      return fallbackIcon;
     },
   });
 
   return (moduleName: string) => {
     const clean = moduleName.toLowerCase().replace(/['"]/g, "");
     if (clean === "react" || clean.startsWith("react/")) {
-      return { ...React, default: React, __esModule: true };
+      return createSafeModule({ ...React, default: React });
     }
     if (clean.includes("lucide-react") || clean.includes("lucide")) {
       return iconProxy;
     }
     if (clean.includes("button")) {
-      return { Button: CompButton, default: CompButton, __esModule: true };
+      return createSafeModule({ Button: CompButton, default: CompButton });
     }
     if (clean.includes("card")) {
-      return {
+      return createSafeModule({
         Card,
         CardHeader,
         CardTitle,
@@ -111,41 +187,40 @@ function createModuleResolver() {
         CardContent,
         CardFooter,
         default: Card,
-        __esModule: true,
-      };
+      });
     }
     if (clean.includes("badge")) {
-      return { Badge: CompBadge, default: CompBadge, __esModule: true };
+      return createSafeModule({ Badge: CompBadge, default: CompBadge });
     }
     if (clean.includes("avatar")) {
-      return { Avatar, AvatarImage, AvatarFallback, default: Avatar, __esModule: true };
+      return createSafeModule({ Avatar, AvatarImage, AvatarFallback, default: Avatar });
     }
     if (clean.includes("separator")) {
-      return { Separator, default: Separator, __esModule: true };
+      return createSafeModule({ Separator, default: Separator });
     }
     if (clean.includes("alert")) {
-      return { Alert, AlertTitle, AlertDescription, default: Alert, __esModule: true };
+      return createSafeModule({ Alert, AlertTitle, AlertDescription, default: Alert });
     }
     if (clean.includes("input")) {
-      return { Input, default: Input, __esModule: true };
+      return createSafeModule({ Input, default: Input });
     }
     if (clean.includes("label")) {
-      return { Label, default: Label, __esModule: true };
+      return createSafeModule({ Label, default: Label });
     }
     if (clean.includes("progress")) {
-      return { Progress, default: Progress, __esModule: true };
+      return createSafeModule({ Progress, default: Progress });
     }
     if (clean.includes("switch")) {
-      return { Switch, default: Switch, __esModule: true };
+      return createSafeModule({ Switch, default: Switch });
     }
     if (clean.includes("slider")) {
-      return { Slider, default: Slider, __esModule: true };
+      return createSafeModule({ Slider, default: Slider });
     }
     if (clean.includes("tabs")) {
-      return { Tabs, TabsList, TabsTrigger, TabsContent, default: Tabs, __esModule: true };
+      return createSafeModule({ Tabs, TabsList, TabsTrigger, TabsContent, default: Tabs });
     }
     if (clean.includes("dialog")) {
-      return {
+      return createSafeModule({
         Dialog,
         DialogTrigger,
         DialogContent,
@@ -154,72 +229,124 @@ function createModuleResolver() {
         DialogDescription,
         DialogFooter,
         default: Dialog,
-        __esModule: true,
-      };
+      });
     }
     if (clean.includes("popover")) {
-      return { Popover, PopoverTrigger, PopoverContent, default: Popover, __esModule: true };
+      return createSafeModule({ Popover, PopoverTrigger, PopoverContent, default: Popover });
     }
     if (clean.includes("tooltip")) {
-      return {
+      return createSafeModule({
         Tooltip,
         TooltipTrigger,
         TooltipContent,
         TooltipProvider,
         default: Tooltip,
-        __esModule: true,
-      };
+      });
     }
     if (clean.includes("accordion")) {
-      return {
+      return createSafeModule({
         Accordion,
         AccordionItem,
         AccordionTrigger,
         AccordionContent,
         default: Accordion,
-        __esModule: true,
-      };
+      });
     }
     if (clean.includes("scroll-area")) {
-      return { ScrollArea, default: ScrollArea, __esModule: true };
+      return createSafeModule({ ScrollArea, default: ScrollArea });
     }
     if (clean.includes("select")) {
-      return {
+      return createSafeModule({
         Select,
         SelectTrigger,
         SelectValue,
         SelectContent,
         SelectItem,
         default: Select,
-        __esModule: true,
-      };
+      });
+    }
+    if (clean.includes("table") && !clean.includes("asset-table")) {
+      return createSafeModule({
+        Table,
+        TableHeader,
+        TableBody,
+        TableFooter,
+        TableHead,
+        TableRow,
+        TableCell,
+        TableCaption,
+        default: Table,
+      });
+    }
+    if (clean.includes("dropdown")) {
+      return createSafeModule({
+        DropdownMenu,
+        DropdownMenuTrigger,
+        DropdownMenuContent,
+        DropdownMenuItem,
+        DropdownMenuCheckboxItem,
+        DropdownMenuRadioItem,
+        DropdownMenuLabel,
+        DropdownMenuSeparator,
+        DropdownMenuShortcut,
+        DropdownMenuGroup,
+        DropdownMenuPortal,
+        DropdownMenuSub,
+        DropdownMenuSubContent,
+        DropdownMenuSubTrigger,
+        DropdownMenuRadioGroup,
+        default: DropdownMenu,
+      });
+    }
+    if (clean.includes("checkbox")) {
+      return createSafeModule({ Checkbox, default: Checkbox });
+    }
+    if (clean.includes("radio")) {
+      return createSafeModule({ RadioGroup, RadioGroupItem, default: RadioGroup });
+    }
+    if (clean.includes("textarea")) {
+      return createSafeModule({ Textarea, default: Textarea });
+    }
+    if (clean.includes("calendar")) {
+      return createSafeModule({ Calendar, default: Calendar });
+    }
+    if (clean.includes("chart") && !clean.includes("portfolio") && !clean.includes("candlestick")) {
+      return createSafeModule({
+        ChartContainer,
+        ChartTooltip,
+        ChartTooltipContent,
+        ChartLegend,
+        ChartLegendContent,
+        default: ChartContainer,
+      });
     }
     if (clean.includes("grid")) {
-      return { Grid, GridItem, default: Grid, __esModule: true };
+      return createSafeModule({ Grid, GridItem, default: Grid });
     }
     if (clean.includes("stack")) {
-      return { Stack, VStack, HStack, default: Stack, __esModule: true };
+      return createSafeModule({ Stack, VStack, HStack, default: Stack });
     }
     if (clean.includes("page-header")) {
-      return { PageHeader, default: PageHeader, __esModule: true };
+      return createSafeModule({ PageHeader, default: PageHeader });
     }
     if (clean.includes("container")) {
-      return { Container, default: Container, __esModule: true };
+      return createSafeModule({ Container, default: Container });
     }
     if (clean.includes("portfolio-chart")) {
-      return {
+      return createSafeModule({
         PortfolioPerformanceChart,
+        AssetAllocationDonutChart,
+        portfolioHistoryData,
+        allocationData,
         default: PortfolioPerformanceChart,
-        __esModule: true,
-      };
+      });
     }
     if (clean.includes("asset-table")) {
-      return {
+      return createSafeModule({
         AssetHoldingsTable,
         sampleHoldings,
         default: AssetHoldingsTable,
-        __esModule: true,
-      };
+      });
     }
     if (
       clean.includes("candlestick") ||
@@ -227,31 +354,22 @@ function createModuleResolver() {
       clean.includes("tradingview") ||
       clean.includes("trading-chart")
     ) {
-      const FallbackCandle = (props: any) => {
-        if (CandlestickChartComp) {
-          return React.createElement(CandlestickChartComp, props);
-        }
-        return (
-          <div className="p-6 text-center border border-dashed rounded-lg text-muted-foreground text-xs">
-            Candlestick chart is loading or initializing...
-          </div>
-        );
-      };
-      return {
-        CandlestickChart: CandlestickChartComp || FallbackCandle,
-        sampleCandleData: sampleCandles,
-        default: CandlestickChartComp || FallbackCandle,
-        __esModule: true,
-      };
+      return createSafeModule({
+        CandlestickChart,
+        sampleCandleData,
+        default: CandlestickChart,
+      });
     }
 
-    // Safe fallback stub for unexpected modules
+    // Safe fallback stub for any other unexpected module
     return new Proxy(
       {},
       {
         get: (_, prop) => {
           if (prop === "__esModule") return true;
-          return (props: any) => React.createElement("div", props, props?.children);
+          const Stub = (props: any) => React.createElement("div", props, props?.children);
+          Stub.displayName = `SafeStub(${String(prop)})`;
+          return Stub;
         },
       }
     );

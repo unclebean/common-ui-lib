@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/chart";
 
 // Mock Portfolio Historical Performance Data
-const portfolioHistoryData = [
+export const portfolioHistoryData = [
   { date: "2024-01", portfolio: 100000, benchmark: 100000 },
   { date: "2024-02", portfolio: 108500, benchmark: 102100 },
   { date: "2024-03", portfolio: 114200, benchmark: 104500 },
@@ -38,7 +38,7 @@ const historyConfig = {
 } satisfies ChartConfig;
 
 // Mock Asset Allocation Data
-const allocationData = [
+export const allocationData = [
   { name: "US Tech Equities", value: 55000, color: "hsl(var(--chart-1))" },
   { name: "Fixed Income / Bonds", value: 30000, color: "hsl(var(--chart-2))" },
   { name: "Global ETF", value: 25000, color: "hsl(var(--chart-3))" },

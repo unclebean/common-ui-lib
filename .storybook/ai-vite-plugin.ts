@@ -333,6 +333,17 @@ export function aiMockupVitePlugin(): Plugin {
         next();
       });
 
+      server.middlewares.use((req, res, next) => {
+        const url = req.url || "";
+        if (url.startsWith("/api/ai")) {
+          res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+          res.setHeader("Pragma", "no-cache");
+          res.setHeader("Expires", "0");
+          res.setHeader("Surrogate-Control", "no-store");
+        }
+        next();
+      });
+
       server.middlewares.use(async (req, res, next) => {
         const url = req.url || "";
 

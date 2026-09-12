@@ -10,7 +10,7 @@ export function generateStandaloneHtml(
   const contentHtml = renderedElement.innerHTML;
 
   return `<!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -155,6 +155,24 @@ export function generateStandaloneHtml(
   </style>
 </head>
 <body class="bg-background text-foreground antialiased min-h-screen p-8">
+  <!-- Discreet Theme Switcher -->
+  <div class="fixed top-4 right-4 z-50 print:hidden">
+    <button
+      id="theme-toggle"
+      onclick="toggleTheme()"
+      class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border border-border bg-card text-foreground shadow-sm hover:bg-accent hover:text-accent-foreground transition-all cursor-pointer select-none"
+      title="Toggle Light / Dark Mode"
+    >
+      <span id="theme-label">☀️ Light</span>
+    </button>
+  </div>
+  <script>
+    function toggleTheme() {
+      const isDark = document.documentElement.classList.toggle('dark');
+      document.getElementById('theme-label').innerText = isDark ? '🌙 Dark' : '☀️ Light';
+    }
+  </script>
+
   <div class="max-w-7xl mx-auto">
     ${contentHtml}
   </div>
