@@ -122,6 +122,57 @@ export const AIMockupPanel: React.FC<AIMockupPanelProps> = ({ active, api, chann
     code = code.replace(/(?<!md:col-span-\d+\s+)\blg:col-span-8\b/g, "md:col-span-8");
     code = code.replace(/(?<!md:col-span-\d+\s+)\blg:col-span-4\b/g, "md:col-span-4");
 
+    const UI_COMPONENT_IMPORTS: Record<string, string> = {
+      Separator: 'import { Separator } from "@/components/ui/separator";',
+      Button: 'import { Button } from "@/components/ui/button";',
+      Badge: 'import { Badge } from "@/components/ui/badge";',
+      Card: 'import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";',
+      Avatar: 'import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";',
+      Input: 'import { Input } from "@/components/ui/input";',
+      Label: 'import { Label } from "@/components/ui/label";',
+      Progress: 'import { Progress } from "@/components/ui/progress";',
+      Switch: 'import { Switch } from "@/components/ui/switch";',
+      Slider: 'import { Slider } from "@/components/ui/slider";',
+      Tabs: 'import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";',
+      Dialog: 'import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";',
+      Popover: 'import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";',
+      Tooltip: 'import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";',
+      Accordion: 'import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";',
+      Alert: 'import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";',
+      ScrollArea: 'import { ScrollArea } from "@/components/ui/scroll-area";',
+      Select: 'import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";',
+      Table: 'import { Table, TableHeader, TableBody, TableFooter, TableHead, TableRow, TableCell, TableCaption } from "@/components/ui/table";',
+      DropdownMenu: 'import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";',
+      Checkbox: 'import { Checkbox } from "@/components/ui/checkbox";',
+      RadioGroup: 'import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";',
+      Textarea: 'import { Textarea } from "@/components/ui/textarea";',
+      Calendar: 'import { Calendar } from "@/components/ui/calendar";',
+      Grid: 'import { Grid, GridItem } from "@/components/layout/grid";',
+      Stack: 'import { Stack, VStack, HStack } from "@/components/layout/stack";',
+      PageHeader: 'import { PageHeader } from "@/components/layout/page-header";',
+      Container: 'import { Container } from "@/components/layout/container";',
+      PortfolioPerformanceChart: 'import { PortfolioPerformanceChart } from "@/finance/portfolio-chart";',
+      AssetAllocationDonutChart: 'import { AssetAllocationDonutChart } from "@/finance/portfolio-chart";',
+      AssetHoldingsTable: 'import { AssetHoldingsTable, sampleHoldings } from "@/finance/asset-table";',
+      CandlestickChart: 'import { CandlestickChart, sampleCandleData } from "@/finance/candlestick-chart";',
+    };
+
+    const missingImports: string[] = [];
+    for (const [tag, importStmt] of Object.entries(UI_COMPONENT_IMPORTS)) {
+      const tagRegex = new RegExp(`<${tag}\\b`);
+      if (tagRegex.test(code)) {
+        const alreadyImported =
+          new RegExp(`import\\s*\\{[^}]*\\b${tag}\\b[^}]*\\}`).test(code) ||
+          new RegExp(`import\\s+${tag}\\b`).test(code);
+        if (!alreadyImported) {
+          missingImports.push(importStmt);
+        }
+      }
+    }
+    if (missingImports.length > 0) {
+      code = missingImports.join("\n") + "\n" + code;
+    }
+
     return code;
   };
 
