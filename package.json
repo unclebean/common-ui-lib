@@ -42,6 +42,10 @@
     "diff:figma": "npx tsx scripts/diff-figma.ts",
     "inspect:comp": "npx tsx scripts/inspect-component.ts"
   },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0"
+  },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
     "@radix-ui/react-accordion": "^1.2.1",
@@ -66,9 +70,7 @@
     "date-fns": "^3.6.0",
     "lightweight-charts": "^5.2.1",
     "lucide-react": "^0.454.0",
-    "react": "^18.3.1",
     "react-day-picker": "^8.10.1",
-    "react-dom": "^18.3.1",
     "react-hook-form": "^7.53.1",
     "recharts": "^2.13.0",
     "sucrase": "^3.35.1",
@@ -86,6 +88,8 @@
     "@vitejs/plugin-react": "^4.3.3",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.4.47",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "storybook": "^8.6.18",
     "tailwindcss": "^3.4.14",
     "typescript": "^5.6.3",
